@@ -1,0 +1,72 @@
+[gd_scene load_steps=6 format=3 uid="uid://bk1shs3x1cguk"]
+
+[ext_resource type="Script" uid="uid://bbtmta7grwv2y" path="res://scripts/scenes/setup/setup.gd" id="1_fnf1q"]
+[ext_resource type="Script" uid="uid://bn0vorbaj7uty" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="2_3w0sv"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_rief1"]
+font_size = 48
+
+[sub_resource type="LabelSettings" id="LabelSettings_oyals"]
+font_size = 32
+
+[sub_resource type="Texture2D" id="Texture2D_c2oie"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("2_3w0sv")
+path = "joypad/a"
+force_controller_icon_style = 5
+force_type = 2
+metadata/_custom_type_script = "uid://bn0vorbaj7uty"
+
+[node name="Setup" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_fnf1q")
+
+[node name="Welcome" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -272.0
+offset_top = 64.0
+offset_right = 272.0
+offset_bottom = 136.0
+grow_horizontal = 2
+text = "Welcome to GamePlaza"
+label_settings = SubResource("LabelSettings_rief1")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PressKeyPrompt" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -128.5
+offset_top = -22.5
+offset_right = 128.5
+offset_bottom = 22.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Press" type="Label" parent="PressKeyPrompt"]
+layout_mode = 2
+text = "Press"
+label_settings = SubResource("LabelSettings_oyals")
+
+[node name="JoypadA" type="TextureRect" parent="PressKeyPrompt"]
+layout_mode = 2
+texture = SubResource("Texture2D_c2oie")
+expand_mode = 3
+
+[node name="ToStart" type="Label" parent="PressKeyPrompt"]
+layout_mode = 2
+text = "To Start"
+label_settings = SubResource("LabelSettings_oyals")

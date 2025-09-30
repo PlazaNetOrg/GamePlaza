@@ -1,0 +1,87 @@
+[gd_scene load_steps=4 format=3 uid="uid://cx60lgrq4e41k"]
+
+[ext_resource type="Script" uid="uid://dbm763a8e35c4" path="res://scripts/scenes/setup/username.gd" id="1_gess0"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_rief1"]
+font_size = 48
+
+[sub_resource type="LabelSettings" id="LabelSettings_gess0"]
+font_color = Color(0.79607844, 0.1764706, 0.38039216, 1)
+
+[node name="Username" type="Control" node_paths=PackedStringArray("name_input", "error_label")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_gess0")
+name_input = NodePath("NameInput")
+error_label = NodePath("NameInput/ErrorLabel")
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -272.0
+offset_top = 64.0
+offset_right = 272.0
+offset_bottom = 136.0
+grow_horizontal = 2
+text = "What is your name?"
+label_settings = SubResource("LabelSettings_rief1")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameInput" type="LineEdit" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -128.0
+offset_top = -20.0
+offset_right = 128.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+placeholder_text = "Enter your name..."
+alignment = 1
+emoji_menu_enabled = false
+
+[node name="ErrorLabel" type="Label" parent="NameInput"]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -128.0
+offset_right = 128.0
+offset_bottom = 23.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Error"
+label_settings = SubResource("LabelSettings_gess0")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ContinueButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -40.0
+offset_top = -136.0
+offset_right = 39.0
+offset_bottom = -105.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Continue"
+
+[connection signal="pressed" from="ContinueButton" to="." method="_on_continue_button_pressed"]
