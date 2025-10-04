@@ -7,7 +7,7 @@ var current_scene : Node = null
 func _ready():
 	shader.set_shader_parameter("blob_strength", 1.0)
 
-func change_scene(scene_path: String, target_blob_strength: float = 1.0) -> void:
+func change_scene(scene_path: String, target_blob_strength: float = 0.8) -> void:
 	var duration: float = 0.5
 	# Load new scene (invisible)
 	var new_scene_res = ResourceLoader.load(scene_path)

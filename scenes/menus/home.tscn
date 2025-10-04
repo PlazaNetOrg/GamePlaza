@@ -1,0 +1,112 @@
+[gd_scene load_steps=7 format=3 uid="uid://buw825x7cmek"]
+
+[ext_resource type="Script" uid="uid://db26wm1hwvxr0" path="res://scripts/scenes/menus/home.gd" id="1_1ib2n"]
+[ext_resource type="Script" uid="uid://bn0vorbaj7uty" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="1_2h562"]
+[ext_resource type="Texture2D" uid="uid://slwhp5aqs1gs" path="res://assets/icons/clock.svg" id="2_wq2jg"]
+[ext_resource type="Texture2D" uid="uid://cgvjuevapoojy" path="res://assets/icons/calendar.svg" id="3_cj6ut"]
+[ext_resource type="Texture2D" uid="uid://dnp1y5jvm1xd0" path="res://assets/icons/user.svg" id="4_difpp"]
+
+[sub_resource type="Texture2D" id="Texture2D_difpp"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_2h562")
+path = "joypad/rb"
+metadata/_custom_type_script = "uid://bn0vorbaj7uty"
+
+[node name="Home" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_1ib2n")
+
+[node name="DateTime" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 112.0
+offset_bottom = 96.0
+
+[node name="Time" type="HBoxContainer" parent="DateTime"]
+layout_mode = 1
+offset_right = 79.0
+offset_bottom = 32.0
+
+[node name="ClockIcon" type="TextureRect" parent="DateTime/Time"]
+layout_mode = 2
+texture = ExtResource("2_wq2jg")
+expand_mode = 3
+
+[node name="TimeLabel" type="Label" parent="DateTime/Time"]
+layout_mode = 2
+text = "00:00"
+
+[node name="Date" type="HBoxContainer" parent="DateTime"]
+layout_mode = 1
+offset_top = 40.0
+offset_right = 80.0
+offset_bottom = 72.0
+
+[node name="CalendarIcon" type="TextureRect" parent="DateTime/Date"]
+layout_mode = 2
+texture = ExtResource("3_cj6ut")
+expand_mode = 3
+
+[node name="DateLabel" type="Label" parent="DateTime/Date"]
+layout_mode = 2
+text = "01/01"
+
+[node name="UserInfo" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -176.0
+offset_top = 24.0
+offset_bottom = 72.0
+grow_horizontal = 0
+
+[node name="UsernameLabel" type="Label" parent="UserInfo"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -11.5
+offset_right = -80.0
+offset_bottom = 11.5
+grow_horizontal = 0
+grow_vertical = 2
+text = "Username"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="UserIcon" type="TextureRect" parent="UserInfo"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -72.0
+offset_top = -24.0
+offset_right = -24.0
+offset_bottom = 24.0
+grow_horizontal = 0
+grow_vertical = 2
+texture = ExtResource("4_difpp")
+expand_mode = 3
+
+[node name="ControllerIcon" type="TextureRect" parent="UserInfo/UserIcon"]
+layout_mode = 1
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 24.0
+offset_bottom = 24.0
+texture = SubResource("Texture2D_difpp")
+expand_mode = 3

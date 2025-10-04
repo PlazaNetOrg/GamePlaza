@@ -1,10 +1,18 @@
 # GamePlaza
-A Launcher for games with a console-like UI
+A modern game launcher with a console-style UI and (optional) PlazaNet integration.
 
 ## Features
+- Game Library Management:
+  - Launch games from multiple platforms (Steam, GOG, Epic, Emulators, etc.)
 - PlazaNet integration:
-  - Friends Statuses (`Offline`, `Online (On PlazaNet)`, `Online (In GamePlaza)`, `Playing (GameName)`)
-  - Posts
+  - View Friends Statuses (`Offline`, `Online (On PlazaNet)`, `Online (In GamePlaza)`, `Playing (GameName)`) _(Requires [Account Server](https://github.com/PlazaNetOrg/Accounts))_
+  - View PlazaNet posts directly from GamePlaza _(Requires [Account Server](https://github.com/PlazaNetOrg/Accounts) and [PlazaNet Server](https://github.com/PlazaNetOrg/PlazaNet))_
+- User Interface:
+  - Console-style fullscreen UI for immersive navigation
+- Extras & Convenience:
+  - Automatic game detection (hopefully)
+  - Support for Windows and Linux
+  - Controller Support with intuitive icons
 
 ## Credits
 - Andus - Developer, Artist

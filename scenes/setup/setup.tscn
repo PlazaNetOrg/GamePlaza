@@ -68,5 +68,5 @@ expand_mode = 3
 
 [node name="ToStart" type="Label" parent="PressKeyPrompt"]
 layout_mode = 2
-text = "To Start"
+text = "to start"
 label_settings = SubResource("LabelSettings_oyals")
