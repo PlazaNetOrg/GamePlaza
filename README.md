@@ -14,6 +14,16 @@ A modern game launcher with a console-style UI and (optional) PlazaNet integrati
   - Support for Windows and Linux
   - Controller Support with intuitive icons
 
+## Support:
+Wanna support the project? Here are the best ways you can:
+- Contribute to the code:
+  - Implement new features
+  - Fix bugs
+- Donate to Andus on [Ko-fi](https://ko-fi.com/andusdev)
+  - This will help with payments for the domain and VPS hosting for the official PlazaNet Instance.
+> [!IMPORTANT]  
+> This project is still in development and isn’t ready to be hosted publicly yet. If you want to support my work in general, feel free to donate, but if your goal is to directly support PlazaNet, please wait until it’s ready for public hosting.
+
 ## Credits
 - Andus - Developer, Artist
 - Addons:
