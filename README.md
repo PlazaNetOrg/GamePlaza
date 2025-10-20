@@ -1,6 +1,9 @@
 # GamePlaza
 A modern game launcher with a console-style UI and (optional) PlazaNet integration.
 
+> [!IMPORTANT]
+> **GamePlaza** is currently paused in development to focus on finishing Accounts and PlazaNet
+
 ## Features
 - Game Library Management:
   - Launch games from multiple platforms (Steam, GOG, Epic, Emulators, etc.)
@@ -19,6 +22,7 @@ Wanna support the project? Here are the best ways you can:
 - Contribute to the code:
   - Implement new features
   - Fix bugs
+- Report bugs you can't fix yourself
 - Donate to Andus on [Ko-fi](https://ko-fi.com/andusdev)
   - This will help with payments for the domain and VPS hosting for the official PlazaNet Instance.
 > [!IMPORTANT]  
