@@ -11,6 +11,10 @@ import 'l10n/app_localizations.dart';
 class GamePlaza extends StatefulWidget {
   const GamePlaza({super.key});
 
+  static _GamePlazaState? of(BuildContext context) {
+    return context.findAncestorStateOfType<_GamePlazaState>();
+  }
+
   @override
   State<GamePlaza> createState() => _GamePlazaState();
 }

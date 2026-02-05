@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:battery_plus/battery_plus.dart';
 import '../../theme/app_colors.dart';
 import '../../models/models.dart';
+import '../../widgets/profile_avatar.dart';
 
 class SidebarWidget extends StatelessWidget {
   final int selectedIndex;
@@ -33,12 +34,20 @@ class SidebarWidget extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(userName ?? 'Player', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text(currentTime, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                ProfileAvatar(userName: userName, size: 48),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(userName ?? 'Player', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(currentTime, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

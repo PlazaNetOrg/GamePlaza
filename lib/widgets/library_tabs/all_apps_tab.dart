@@ -15,6 +15,7 @@ class AllAppsTab extends StatefulWidget {
   final ValueChanged<String> onSearchQueryChanged;
   final InstalledAppsService appsService;
   final Function(String appName, String packageName)? onAddAsGame;
+  final void Function(AppInfo app, bool isGameStreaming, String displayName)? onAddAsStreaming;
 
   const AllAppsTab({
     super.key,
@@ -26,6 +27,7 @@ class AllAppsTab extends StatefulWidget {
     required this.onSearchQueryChanged,
     required this.appsService,
     this.onAddAsGame,
+    this.onAddAsStreaming,
   });
 
   @override
@@ -289,6 +291,15 @@ class _AllAppsTabState extends State<AllAppsTab> {
                   _addAppAsGame(app);
                 },
               ),
+              if (widget.onAddAsStreaming != null)
+                _buildContextMenuItem(
+                  icon: Icons.stream,
+                  label: AppLocalizations.of(context).libraryAddAsStreaming,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _addAppAsStreaming(app);
+                  },
+                ),
               _buildContextMenuItem(
                 icon: Icons.delete_outline,
                 label: 'Uninstall',
@@ -378,6 +389,79 @@ class _AllAppsTabState extends State<AllAppsTab> {
               child: Text(AppLocalizations.of(context).libraryAdd),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _addAppAsStreaming(AppInfo app) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final titleController = TextEditingController(text: app.name);
+        bool isGameStreaming = true;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            backgroundColor: AppColors.elevatedSurface,
+            title: Text(
+              AppLocalizations.of(context).libraryAddAsStreaming,
+              style: const TextStyle(color: AppColors.textPrimary),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: titleController,
+                  autofocus: true,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context).libraryGameTitleHint,
+                    hintStyle: const TextStyle(color: AppColors.textSecondary),
+                    filled: true,
+                    fillColor: AppColors.darkSurface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.divider),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: Text(AppLocalizations.of(context).streamingGameTitle),
+                      selected: isGameStreaming,
+                      onSelected: (_) => setDialogState(() => isGameStreaming = true),
+                    ),
+                    ChoiceChip(
+                      label: Text(AppLocalizations.of(context).streamingVideoTitle),
+                      selected: !isGameStreaming,
+                      onSelected: (_) => setDialogState(() => isGameStreaming = false),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(AppLocalizations.of(context).actionCancel),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final title = titleController.text.trim();
+                  if (title.isNotEmpty && widget.onAddAsStreaming != null) {
+                    widget.onAddAsStreaming!(app, isGameStreaming, title);
+                  }
+                  Navigator.pop(context);
+                },
+                child: Text(AppLocalizations.of(context).libraryAdd),
+              ),
+            ],
+          ),
         );
       },
     );

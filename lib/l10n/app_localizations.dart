@@ -103,6 +103,11 @@ abstract class AppLocalizations {
   String get settingsSteamGridDbTitle;
   String get settingsSteamGridDbDescription;
   String get settingsSteamGridDbHint;
+  String get settingsStreaming;
+  String get settingsGameStreaming;
+  String get settingsGameStreamingDesc;
+  String get settingsVideoStreaming;
+  String get settingsVideoStreamingDesc;
   String get settingsData;
   String get settingsResetSetup;
   String get settingsResetSetupDialog;
@@ -122,6 +127,7 @@ abstract class AppLocalizations {
   String get libraryLastPlayed;
   String get libraryNever;
   String get libraryTabGames;
+  String get libraryTabStreaming;
   String get libraryTabAllApps;
   String get libraryNoApps;
   String get libraryReloadSearchHint;
@@ -129,6 +135,8 @@ abstract class AppLocalizations {
   String get libraryReloadTooltip;
   String get librarySearchTooltip;
   String get libraryAddAsGame;
+  String get libraryAddAsStreaming;
+  String get libraryRemoveFromStreaming;
   String get libraryAdd;
   String get libraryUninstallApp;
   String get libraryUninstall;
@@ -187,6 +195,10 @@ abstract class AppLocalizations {
   String get gameDialogsCoverUpdated;
   String get gameDialogsBannerUpdated;
   String get gameDialogsCancel;
+
+  // Streaming
+  String get streamingGameTitle;
+  String get streamingVideoTitle;
 
   // Messages
   String get msgLoginSuccess;

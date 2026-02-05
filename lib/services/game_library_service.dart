@@ -9,6 +9,12 @@ class GameLibraryService {
   static const String _plazanetLoginKey = 'plazanet_login';
   static const String _plazanetUrlKey = 'plazanet_url';
   static const String _plazanetUsernameKey = 'plazanet_username';
+  static const String _gameStreamingEnabledKey = 'game_streaming_enabled';
+  static const String _videoStreamingEnabledKey = 'video_streaming_enabled';
+  static const String _gameStreamingAppsKey = 'game_streaming_apps';
+  static const String _videoStreamingAppsKey = 'video_streaming_apps';
+  static const String _streamingAppCoversKey = 'streaming_app_covers';
+  static const String _streamingAppNamesKey = 'streaming_app_names';
 
   Future<void> saveGames(List<Game> games) async {
     final prefs = await SharedPreferences.getInstance();
@@ -119,6 +125,144 @@ class GameLibraryService {
     await prefs.remove(_plazanetLoginKey);
     await prefs.remove(_plazanetUrlKey);
     await prefs.remove(_plazanetUsernameKey);
+  }
+
+  Future<void> setGameStreamingEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_gameStreamingEnabledKey, enabled);
+  }
+
+  Future<bool> isGameStreamingEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_gameStreamingEnabledKey) ?? false;
+  }
+
+  Future<void> setVideoStreamingEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_videoStreamingEnabledKey, enabled);
+  }
+
+  Future<bool> isVideoStreamingEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_videoStreamingEnabledKey) ?? false;
+  }
+
+  Future<List<String>> getGameStreamingApps() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_gameStreamingAppsKey) ?? [];
+  }
+
+  Future<List<String>> getVideoStreamingApps() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_videoStreamingAppsKey) ?? [];
+  }
+
+  Future<void> addGameStreamingApp(String packageName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final apps = prefs.getStringList(_gameStreamingAppsKey) ?? [];
+    if (!apps.contains(packageName)) {
+      apps.add(packageName);
+      await prefs.setStringList(_gameStreamingAppsKey, apps);
+    }
+  }
+
+  Future<void> addVideoStreamingApp(String packageName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final apps = prefs.getStringList(_videoStreamingAppsKey) ?? [];
+    if (!apps.contains(packageName)) {
+      apps.add(packageName);
+      await prefs.setStringList(_videoStreamingAppsKey, apps);
+    }
+  }
+
+  Future<void> removeGameStreamingApp(String packageName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final apps = prefs.getStringList(_gameStreamingAppsKey) ?? [];
+    apps.remove(packageName);
+    await prefs.setStringList(_gameStreamingAppsKey, apps);
+  }
+
+  Future<void> removeVideoStreamingApp(String packageName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final apps = prefs.getStringList(_videoStreamingAppsKey) ?? [];
+    apps.remove(packageName);
+    await prefs.setStringList(_videoStreamingAppsKey, apps);
+  }
+
+  Future<Map<String, String>> getStreamingAppNames() async {
+    final prefs = await SharedPreferences.getInstance();
+    final namesJson = prefs.getString(_streamingAppNamesKey);
+    if (namesJson == null) return {};
+
+    try {
+      final names = json.decode(namesJson) as Map<String, dynamic>;
+      return names.map((key, value) => MapEntry(key, value.toString()));
+    } catch (e) {
+      return {};
+    }
+  }
+
+  Future<String?> getStreamingAppName(String packageName) async {
+    final names = await getStreamingAppNames();
+    return names[packageName];
+  }
+
+  Future<void> setStreamingAppName(String packageName, String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    final namesJson = prefs.getString(_streamingAppNamesKey) ?? '{}';
+
+    try {
+      final names = json.decode(namesJson) as Map<String, dynamic>;
+      names[packageName] = name;
+      await prefs.setString(_streamingAppNamesKey, json.encode(names));
+    } catch (e) {
+      final names = {packageName: name};
+      await prefs.setString(_streamingAppNamesKey, json.encode(names));
+    }
+  }
+
+  Future<void> removeStreamingAppName(String packageName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final namesJson = prefs.getString(_streamingAppNamesKey) ?? '{}';
+
+    try {
+      final names = json.decode(namesJson) as Map<String, dynamic>;
+      names.remove(packageName);
+      await prefs.setString(_streamingAppNamesKey, json.encode(names));
+    } catch (e) {
+      await prefs.setString(_streamingAppNamesKey, '{}');
+    }
+  }
+
+  Future<String?> getStreamingAppCoverPath(String packageName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final coversJson = prefs.getString(_streamingAppCoversKey);
+    if (coversJson == null) return null;
+    
+    try {
+      final covers = json.decode(coversJson) as Map<String, dynamic>;
+      return covers[packageName] as String?;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> setStreamingAppCoverPath(String packageName, String? coverPath) async {
+    final prefs = await SharedPreferences.getInstance();
+    final coversJson = prefs.getString(_streamingAppCoversKey) ?? '{}';
+    
+    try {
+      final covers = json.decode(coversJson) as Map<String, dynamic>;
+      if (coverPath == null) {
+        covers.remove(packageName);
+      } else {
+        covers[packageName] = coverPath;
+      }
+      await prefs.setString(_streamingAppCoversKey, json.encode(covers));
+    } catch (e) {
+      final covers = {packageName: coverPath};
+      await prefs.setString(_streamingAppCoversKey, json.encode(covers));
+    }
   }
 }
 

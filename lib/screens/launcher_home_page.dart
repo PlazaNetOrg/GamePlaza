@@ -56,6 +56,10 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   bool _isLoadingApps = true;
   String? _userName;
   String? _apiKey;
+  bool _showGameStreaming = false;
+  bool _showVideoStreaming = false;
+  List<String> _gameStreamingApps = [];
+  List<String> _videoStreamingApps = [];
   late TabController _tabController;
   final FocusNode _playButtonFocusNode = FocusNode();
 
@@ -73,6 +77,10 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   static const String _playSessionGameIdKey = 'play_session_game_id';
   DateTime? _playSessionStart;
   String? _playSessionGameId;
+  
+  // Streaming app covers cache
+  final Map<String, String?> _streamingAppCoversCache = {};
+  final Map<String, String> _streamingAppNamesCache = {};
 
   List<NavigationItem> _navItems(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -89,11 +97,14 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() => mounted ? setState(() {}) : null);
 
     _loadLibrary();
     _loadInstalledApps();
+    _loadStreamingSettings();
+    _loadStreamingApps();
     _updateTime();
     _updateBattery();
     _initShortcutService();
@@ -202,6 +213,116 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       _installedApps = apps;
       _isLoadingApps = false;
     });
+  }
+
+  Future<void> _loadStreamingSettings() async {
+    final gameStreaming = await _libraryService.isGameStreamingEnabled();
+    final videoStreaming = await _libraryService.isVideoStreamingEnabled();
+    if (!mounted) return;
+
+    _applyStreamingTabSettings(gameStreaming, videoStreaming);
+  }
+
+  Future<void> _loadStreamingApps() async {
+    final gameApps = await _libraryService.getGameStreamingApps();
+    final videoApps = await _libraryService.getVideoStreamingApps();
+    if (!mounted) return;
+    setState(() {
+      _gameStreamingApps = gameApps;
+      _videoStreamingApps = videoApps;
+    });
+    await _loadStreamingAppCovers();
+    await _loadStreamingAppNames();
+  }
+
+  Future<void> _reloadAppData() async {
+    await _loadLibrary();
+    await _loadStreamingSettings();
+    await _loadStreamingApps();
+  }
+
+  void _applyStreamingTabSettings(bool gameStreaming, bool videoStreaming) {
+    final showStreaming = gameStreaming || videoStreaming;
+    final tabCount = showStreaming ? 3 : 2;
+
+    if (_tabController.length != tabCount) {
+      _tabController.dispose();
+      _tabController = TabController(length: tabCount, vsync: this);
+      _tabController.addListener(() => mounted ? setState(() {}) : null);
+    }
+
+    setState(() {
+      _showGameStreaming = gameStreaming;
+      _showVideoStreaming = videoStreaming;
+    });
+  }
+
+  Future<void> _addStreamingApp(AppInfo app, bool isGameStreaming, String displayName) async {
+    if (isGameStreaming) {
+      await _libraryService.addGameStreamingApp(app.packageName);
+    } else {
+      await _libraryService.addVideoStreamingApp(app.packageName);
+    }
+    await _libraryService.setStreamingAppName(app.packageName, displayName);
+    _streamingAppNamesCache[app.packageName] = displayName;
+    await _loadStreamingApps();
+  }
+
+  Future<void> _removeStreamingApp(AppInfo app, bool isGameStreaming) async {
+    if (isGameStreaming) {
+      await _libraryService.removeGameStreamingApp(app.packageName);
+    } else {
+      await _libraryService.removeVideoStreamingApp(app.packageName);
+    }
+    await _libraryService.removeStreamingAppName(app.packageName);
+    await _libraryService.setStreamingAppCoverPath(app.packageName, null);
+    _streamingAppNamesCache.remove(app.packageName);
+    _streamingAppCoversCache.remove(app.packageName);
+    await _loadStreamingApps();
+  }
+
+  Future<void> _setStreamingAppCover(AppInfo app, String? coverPath) async {
+    if (_apiKey == null || _apiKey!.isEmpty) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => CoverPickerDialog(
+        apiKey: _apiKey!,
+        appName: app.name,
+        packageName: app.packageName,
+        onCoverSelected: (url) async {
+          try {
+            final savedPath = await _gameArtService.saveGameArt(
+              gameId: app.packageName,
+              imageUrl: url,
+              type: GameArtType.cover,
+            );
+            await _libraryService.setStreamingAppCoverPath(app.packageName, savedPath);
+            
+            if (mounted) {
+              setState(() {
+                _streamingAppCoversCache[app.packageName] = savedPath;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).gameDialogsCoverUpdated),
+                  backgroundColor: AppColors.primaryBlue,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${AppLocalizations.of(context).msgArtworkError}: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
   }
 
   void _restorePendingPlaySession() async {
@@ -343,6 +464,35 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       return FileImage(File(game.localCoverPath!));
     }
     return null;
+  }
+
+  ImageProvider? _streamingAppCoverImage(AppInfo app) {
+    final coverPath = _streamingAppCoversCache[app.packageName];
+    if (coverPath != null) {
+      final file = File(coverPath);
+      if (file.existsSync()) {
+        return FileImage(file);
+      }
+    }
+    return null;
+  }
+
+  String _streamingAppDisplayName(AppInfo app) {
+    return _streamingAppNamesCache[app.packageName] ?? app.name;
+  }
+
+  Future<void> _loadStreamingAppCovers() async {
+    for (final packageName in [..._gameStreamingApps, ..._videoStreamingApps]) {
+      final coverPath = await _libraryService.getStreamingAppCoverPath(packageName);
+      _streamingAppCoversCache[packageName] = coverPath;
+    }
+  }
+
+  Future<void> _loadStreamingAppNames() async {
+    final names = await _libraryService.getStreamingAppNames();
+    _streamingAppNamesCache
+      ..clear()
+      ..addAll(names);
   }
 
   String _formatLastPlayed(DateTime date) {
@@ -564,9 +714,16 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   Widget _buildScreenContent() {
     Widget body;
     if (_selectedIndex == 0) {
+      final gamePackageNames = _games
+          .where((g) => g.packageName != null && g.shortcutId == null)
+          .map((g) => g.packageName!)
+          .toSet();
+      final appsCount = _installedApps
+          .where((app) => !gamePackageNames.contains(app.packageName))
+          .length;
       body = HomeScreen(
         games: _games,
-        allAppsCount: _installedApps.length,
+        allAppsCount: appsCount,
         isLoading: _isLoading,
         onGoToLibrary: () => setState(() => _selectedIndex = 1),
         onOpenGameDetail: _openGameDetail,
@@ -589,9 +746,18 @@ class _LauncherHomePageState extends State<LauncherHomePage>
         onAppsSearchQueryChanged: (v) => setState(() => _appsSearchQuery = v),
         onGameCardPressed: _openGameDetail,
         coverImageProvider: _coverImage,
+        streamingCoverImageProvider: _streamingAppCoverImage,
+        streamingDisplayNameProvider: _streamingAppDisplayName,
         appsService: _appsService,
         onAddAsGame: _addGameFromApp,
+        onAddAsStreaming: _addStreamingApp,
+        onRemoveStreaming: _removeStreamingApp,
+        onSetStreamingCover: _setStreamingAppCover,
+        gameStreamingApps: _gameStreamingApps,
+        videoStreamingApps: _videoStreamingApps,
         tabController: _tabController,
+        showGameStreaming: _showGameStreaming,
+        showVideoStreaming: _showVideoStreaming,
       );
     } else if (_selectedIndex == 2) {
       final items = _navItems(context);
@@ -604,6 +770,8 @@ class _LauncherHomePageState extends State<LauncherHomePage>
         libraryService: _libraryService,
         appsService: _appsService,
         presenceService: _presenceService,
+        onStreamingSettingsChanged: _applyStreamingTabSettings,
+        onSettingsChanged: _reloadAppData,
       );
     }
 

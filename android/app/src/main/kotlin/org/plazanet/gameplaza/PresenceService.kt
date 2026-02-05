@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.IBinder
 import android.os.Handler
@@ -20,6 +21,7 @@ class PresenceService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var heartbeatRunnable: Runnable? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private lateinit var prefs: SharedPreferences
     
     companion object {
         const val CHANNEL_ID = "presence_service_channel"
@@ -33,6 +35,11 @@ class PresenceService : Service() {
         const val EXTRA_INTERVAL = "interval"
         
         private const val TAG = "PresenceService"
+        private const val PREFS_NAME = "presence_service_prefs"
+        private const val PREF_BASE_URL = "base_url"
+        private const val PREF_TOKEN = "token"
+        private const val PREF_GAME = "game"
+        private const val PREF_INTERVAL = "interval"
     }
     
     private var baseUrl: String? = null
@@ -44,6 +51,7 @@ class PresenceService : Service() {
     
     override fun onCreate() {
         super.onCreate()
+        prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         createNotificationChannel()
         registerScreenReceiver()
     }
@@ -57,6 +65,14 @@ class PresenceService : Service() {
                 gameName = intent.getStringExtra(EXTRA_GAME)
                 intervalSeconds = intent.getIntExtra(EXTRA_INTERVAL, 30)
                 
+                prefs.edit().apply {
+                    baseUrl?.let { putString(PREF_BASE_URL, it) }
+                    token?.let { putString(PREF_TOKEN, it) }
+                    gameName?.let { putString(PREF_GAME, it) }
+                    putInt(PREF_INTERVAL, intervalSeconds)
+                    apply()
+                }
+                
                 startForeground(NOTIFICATION_ID, createNotification())
                 startHeartbeats()
                 Log.d(TAG, "Service started for game: $gameName")
@@ -64,9 +80,24 @@ class PresenceService : Service() {
             ACTION_STOP -> {
                 serviceStopped = true
                 stopHeartbeats()
+                prefs.edit().clear().apply()
                 stopForeground(true)
                 stopSelf()
                 Log.d(TAG, "Service stopped")
+            }
+            null -> {
+                baseUrl = prefs.getString(PREF_BASE_URL, null)
+                token = prefs.getString(PREF_TOKEN, null)
+                gameName = prefs.getString(PREF_GAME, null)
+                intervalSeconds = prefs.getInt(PREF_INTERVAL, 30)
+                
+                if (baseUrl != null && token != null && gameName != null) {
+                    startForeground(NOTIFICATION_ID, createNotification())
+                    startHeartbeats()
+                    Log.d(TAG, "Service restarted for game: $gameName")
+                } else {
+                    stopSelf()
+                }
             }
         }
         return START_STICKY

@@ -237,6 +237,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSteamGridDbHint => 'Paste your API key here';
 
   @override
+  String get settingsStreaming => 'Streaming';
+
+  @override
+  String get settingsGameStreaming => 'Game Streaming';
+
+  @override
+  String get settingsGameStreamingDesc => 'Show game streaming apps like Xbox Cloud, Moonlight, etc.';
+
+  @override
+  String get settingsVideoStreaming => 'Video Streaming';
+
+  @override
+  String get settingsVideoStreamingDesc => 'Show video streaming apps like Netflix, Spotify, YouTube, etc.';
+
+  @override
   String get settingsData => 'Data';
 
   @override
@@ -288,6 +303,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryTabGames => 'Games';
 
   @override
+  String get libraryTabStreaming => 'Streaming';
+
+  @override
   String get libraryTabAllApps => 'All Apps';
 
   @override
@@ -307,6 +325,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryAddAsGame => 'Add as Game';
+
+  @override
+  String get libraryAddAsStreaming => 'Add as Streaming';
+
+  @override
+  String get libraryRemoveFromStreaming => 'Remove from Streaming';
 
   @override
   String get libraryAdd => 'Add';
@@ -459,6 +483,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
     @override
     String get gameDialogsCancel => 'Cancel';
+
+  @override
+  String get streamingGameTitle => 'Game Streaming';
+
+  @override
+  String get streamingVideoTitle => 'Video Streaming';
 
   @override
   String get msgLoginSuccess => 'Successfully logged into PlazaNet!';

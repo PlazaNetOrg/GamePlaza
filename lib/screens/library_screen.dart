@@ -18,9 +18,18 @@ class LibraryScreen extends StatelessWidget {
   final ValueChanged<String> onAppsSearchQueryChanged;
   final Function(Game) onGameCardPressed;
   final ImageProvider? Function(Game) coverImageProvider;
+  final ImageProvider? Function(AppInfo) streamingCoverImageProvider;
+  final String Function(AppInfo) streamingDisplayNameProvider;
   final InstalledAppsService appsService;
   final Function(String appName, String packageName)? onAddAsGame;
+  final void Function(AppInfo app, bool isGameStreaming, String displayName)? onAddAsStreaming;
+  final void Function(AppInfo app, bool isGameStreaming)? onRemoveStreaming;
+  final Function(AppInfo app, String? coverPath)? onSetStreamingCover;
+  final List<String> gameStreamingApps;
+  final List<String> videoStreamingApps;
   final TabController? tabController;
+  final bool showGameStreaming;
+  final bool showVideoStreaming;
 
   const LibraryScreen({
     super.key,
@@ -37,9 +46,18 @@ class LibraryScreen extends StatelessWidget {
     required this.onAppsSearchQueryChanged,
     required this.onGameCardPressed,
     required this.coverImageProvider,
+    required this.streamingCoverImageProvider,
+    required this.streamingDisplayNameProvider,
     required this.appsService,
     this.onAddAsGame,
+    this.onAddAsStreaming,
+    this.onRemoveStreaming,
+    this.onSetStreamingCover,
+    this.gameStreamingApps = const [],
+    this.videoStreamingApps = const [],
     this.tabController,
+    this.showGameStreaming = false,
+    this.showVideoStreaming = false,
   });
 
   @override
@@ -58,9 +76,18 @@ class LibraryScreen extends StatelessWidget {
       onAppsSearchQueryChanged: onAppsSearchQueryChanged,
       onGameCardPressed: onGameCardPressed,
       coverImageProvider: coverImageProvider,
+      streamingCoverImageProvider: streamingCoverImageProvider,
+      streamingDisplayNameProvider: streamingDisplayNameProvider,
       appsService: appsService,
       onAddAsGame: onAddAsGame,
+      onAddAsStreaming: onAddAsStreaming,
+      onRemoveStreaming: onRemoveStreaming,
+      onSetStreamingCover: onSetStreamingCover,
+      gameStreamingApps: gameStreamingApps,
+      videoStreamingApps: videoStreamingApps,
       tabController: tabController,
+      showGameStreaming: showGameStreaming,
+      showVideoStreaming: showVideoStreaming,
     );
   }
 }

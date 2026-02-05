@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
+import '../app.dart';
 import '../theme/app_colors.dart';
 import '../services/game_library_service.dart';
 import '../services/installed_apps_service.dart';
@@ -12,12 +13,16 @@ class SettingsScreen extends StatefulWidget {
   final GameLibraryService libraryService;
   final InstalledAppsService appsService;
   final PresenceService presenceService;
+  final void Function(bool gameStreaming, bool videoStreaming)? onStreamingSettingsChanged;
+  final Future<void> Function()? onSettingsChanged;
 
   const SettingsScreen({
     super.key,
     required this.libraryService,
     required this.appsService,
     required this.presenceService,
+    this.onStreamingSettingsChanged,
+    this.onSettingsChanged,
   });
 
   @override
@@ -46,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 future: widget.libraryService.getUserName(),
               ),
               const SizedBox(height: 12),
-              _LanguagePicker(),
+              _LanguagePicker(onSettingsChanged: widget.onSettingsChanged),
               const SizedBox(height: 12),
               _PlazaNetStatusTile(
                 libraryService: widget.libraryService,
@@ -57,7 +62,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _SettingsSection(
             title: AppLocalizations.of(context).settingsIntegrations,
             children: [
-              _SteamGridDBKeyInput(),
+              _SteamGridDBKeyInput(onSettingsChanged: widget.onSettingsChanged),
             ],
           ),
           const SizedBox(height: 24),
@@ -75,6 +80,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: AppLocalizations.of(context).settingsPresence,
             children: [
               _PresenceToggle(presenceService: widget.presenceService),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _SettingsSection(
+            title: AppLocalizations.of(context).settingsStreaming,
+            children: [
+              _StreamingToggle(
+                libraryService: widget.libraryService,
+                onSettingsChanged: widget.onStreamingSettingsChanged,
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -280,7 +295,9 @@ class _ResetSetupOption extends StatelessWidget {
 class _PresenceToggle extends StatelessWidget {
   final PresenceService presenceService;
 
-  const _PresenceToggle({required this.presenceService});
+  const _PresenceToggle({
+    required this.presenceService,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -453,7 +470,9 @@ class _ClearDataOption extends StatelessWidget {
 }
 
 class _LanguagePicker extends StatefulWidget {
-  const _LanguagePicker();
+  final Future<void> Function()? onSettingsChanged;
+
+  const _LanguagePicker({this.onSettingsChanged});
 
   @override
   State<_LanguagePicker> createState() => _LanguagePickerState();
@@ -510,9 +529,8 @@ class _LanguagePickerState extends State<_LanguagePicker> {
                   setState(() {
                     _languageFuture = Future.value(value);
                   });
-                  if (context.mounted) {
-                    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-                  }
+                  GamePlaza.of(context)?.updateLocale(Locale(value));
+                  await widget.onSettingsChanged?.call();
                 }
               },
             ),
@@ -524,7 +542,9 @@ class _LanguagePickerState extends State<_LanguagePicker> {
 }
 
 class _SteamGridDBKeyInput extends StatefulWidget {
-  const _SteamGridDBKeyInput();
+  final Future<void> Function()? onSettingsChanged;
+
+  const _SteamGridDBKeyInput({this.onSettingsChanged});
 
   @override
   State<_SteamGridDBKeyInput> createState() => _SteamGridDBKeyInputState();
@@ -607,6 +627,95 @@ class _SteamGridDBKeyInputState extends State<_SteamGridDBKeyInput> {
           },
         ),
       ],
+    );
+  }
+}
+class _StreamingToggle extends StatefulWidget {
+  final GameLibraryService libraryService;
+  final void Function(bool gameStreaming, bool videoStreaming)? onSettingsChanged;
+
+  const _StreamingToggle({
+    required this.libraryService,
+    this.onSettingsChanged,
+  });
+
+  @override
+  State<_StreamingToggle> createState() => _StreamingToggleState();
+}
+
+class _StreamingToggleState extends State<_StreamingToggle> {
+  late Future<bool> _gameStreamingFuture;
+  late Future<bool> _videoStreamingFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _gameStreamingFuture = widget.libraryService.isGameStreamingEnabled();
+    _videoStreamingFuture = widget.libraryService.isVideoStreamingEnabled();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _gameStreamingFuture,
+      builder: (context, gameSnapshot) {
+        final gameEnabled = gameSnapshot.data ?? false;
+        return FutureBuilder<bool>(
+          future: _videoStreamingFuture,
+          builder: (context, videoSnapshot) {
+            final videoEnabled = videoSnapshot.data ?? false;
+            return Column(
+              children: [
+                SwitchListTile(
+                  title: Text(
+                    AppLocalizations.of(context).settingsGameStreaming,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context).settingsGameStreamingDesc,
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  ),
+                  value: gameEnabled,
+                  activeThumbColor: AppColors.primaryBlue,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (value) async {
+                    await widget.libraryService.setGameStreamingEnabled(value);
+                    widget.onSettingsChanged?.call(value, videoEnabled);
+                    if (mounted) {
+                      setState(() {
+                        _gameStreamingFuture = widget.libraryService.isGameStreamingEnabled();
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: Text(
+                    AppLocalizations.of(context).settingsVideoStreaming,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                  ),
+                  subtitle: Text(
+                    AppLocalizations.of(context).settingsVideoStreamingDesc,
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  ),
+                  value: videoEnabled,
+                  activeThumbColor: AppColors.primaryBlue,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (value) async {
+                    await widget.libraryService.setVideoStreamingEnabled(value);
+                    widget.onSettingsChanged?.call(gameEnabled, value);
+                    if (mounted) {
+                      setState(() {
+                        _videoStreamingFuture = widget.libraryService.isVideoStreamingEnabled();
+                      });
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
