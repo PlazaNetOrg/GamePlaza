@@ -602,7 +602,9 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
     } else if (state == AppLifecycleState.resumed) {
-      if (_playSessionStart == null || _playSessionGameId == null) {
+      if (_playSessionStart != null || _playSessionGameId != null) {
+        unawaited(_completePlaySession());
+      } else {
         _presenceService.goOnline();
       }
     }

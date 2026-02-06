@@ -78,7 +78,7 @@ class PresenceService : Service() {
                 serviceStopped = true
                 stopHeartbeats()
                 prefs.edit().clear().apply()
-                stopForeground(true)
+                removeNotification()
                 stopSelf()
                 Log.d(TAG, "Service stopped")
             }
@@ -130,7 +130,7 @@ class PresenceService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Playing on PlazaNet")
             .setContentText(gameName ?: "Playing a game")
-            .setSmallIcon(android.R.drawable.ic_menu_upload)
+            .setSmallIcon(R.drawable.ic_cloud)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setSilent(true)
@@ -213,6 +213,16 @@ class PresenceService : Service() {
             Log.e(TAG, "Heartbeat failed: ${e.message}")
         }
     }
+
+    private fun removeNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            stopForeground(true)
+        }
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(NOTIFICATION_ID)
+    }
     
     override fun onDestroy() {
         super.onDestroy()
@@ -220,5 +230,14 @@ class PresenceService : Service() {
         scope.cancel()
         screenReceiver?.let { unregisterReceiver(it) }
         screenReceiver = null
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        serviceStopped = true
+        stopHeartbeats()
+        removeNotification()
+        stopSelf()
+        Log.d(TAG, "Service stopped")
     }
 }
