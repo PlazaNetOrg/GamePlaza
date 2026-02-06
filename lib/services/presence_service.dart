@@ -13,7 +13,7 @@ class PresenceService {
   static const String _tokenKey = 'plazanet_auth_token';
   static const String _overallPresenceEnabledKey = 'presence_overall_enabled';
   static const String _gamePresenceEnabledKey = 'presence_game_enabled';
-  static const int _heartbeatSeconds = 30;
+  static const int _heartbeatSeconds = 20;
 
   Timer? _heartbeatTimer;
   String? _currentGame;
@@ -117,6 +117,7 @@ class PresenceService {
 
       final body = {
         'client_type': 'gameplaza',
+        'status': _currentGame == null ? 'online' : 'playing',
         if (_currentGame != null) 'game': _currentGame,
       };
 

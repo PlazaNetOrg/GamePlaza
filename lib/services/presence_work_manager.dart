@@ -51,6 +51,7 @@ class PresenceWorkManager {
 
       final body = {
         'client_type': 'gameplaza',
+        'status': (currentGame != null && currentGame.isNotEmpty) ? 'playing' : 'online',
         if (currentGame != null && currentGame.isNotEmpty) 'game': currentGame,
       };
 

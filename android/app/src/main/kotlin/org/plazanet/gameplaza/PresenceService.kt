@@ -8,8 +8,6 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.IBinder
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
@@ -18,9 +16,8 @@ import java.net.URL
 import org.json.JSONObject
 
 class PresenceService : Service() {
-    private val handler = Handler(Looper.getMainLooper())
-    private var heartbeatRunnable: Runnable? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var heartbeatJob: Job? = null
     private lateinit var prefs: SharedPreferences
     
     companion object {
@@ -133,7 +130,7 @@ class PresenceService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Playing on PlazaNet")
             .setContentText(gameName ?: "Playing a game")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(android.R.drawable.ic_menu_upload)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setSilent(true)
@@ -142,19 +139,18 @@ class PresenceService : Service() {
     }
     
     private fun startHeartbeats() {
-        if (heartbeatRunnable != null) return
-        heartbeatRunnable = object : Runnable {
-            override fun run() {
+        if (heartbeatJob?.isActive == true) return
+        heartbeatJob = scope.launch {
+            while (isActive && !serviceStopped) {
                 sendHeartbeat()
-                handler.postDelayed(this, intervalSeconds * 1000L)
+                delay(intervalSeconds * 1000L)
             }
         }
-        handler.post(heartbeatRunnable!!)
     }
     
     private fun stopHeartbeats() {
-        heartbeatRunnable?.let { handler.removeCallbacks(it) }
-        heartbeatRunnable = null
+        heartbeatJob?.cancel()
+        heartbeatJob = null
     }
 
     private fun registerScreenReceiver() {
@@ -169,7 +165,7 @@ class PresenceService : Service() {
                     Intent.ACTION_USER_PRESENT, Intent.ACTION_SCREEN_ON -> {
                         if (!serviceStopped) {
                             startHeartbeats()
-                            Log.d(TAG, "Screen on - heartbeats resumed")
+                            Log.d(TAG, "Screen on - ensuring heartbeats active")
                         }
                     }
                 }
@@ -184,43 +180,37 @@ class PresenceService : Service() {
         registerReceiver(screenReceiver, filter)
     }
     
-    private fun sendHeartbeat() {
-        scope.launch {
-            try {
-                val url = URL("$baseUrl/api/presence/heartbeat")
-                val connection = url.openConnection() as HttpURLConnection
+    private suspend fun sendHeartbeat() {
+        try {
+            val url = URL("$baseUrl/api/presence/heartbeat")
+            val connection = url.openConnection() as HttpURLConnection
+            
+            connection.apply {
+                requestMethod = "POST"
+                setRequestProperty("Content-Type", "application/json")
+                setRequestProperty("Authorization", "Bearer $token")
+                doOutput = true
                 
-                connection.apply {
-                    requestMethod = "POST"
-                    setRequestProperty("Content-Type", "application/json")
-                    setRequestProperty("Authorization", "Bearer $token")
-                    doOutput = true
-                    
-                    val jsonBody = JSONObject().apply {
-                        put("client_type", "gameplaza")
-                        gameName?.let { put("game", it) }
-                    }
-                    
-                    Log.d(TAG, "Sending heartbeat - Game: $gameName, JSON: $jsonBody")
-                    
-                    outputStream.use { os ->
-                        os.write(jsonBody.toString().toByteArray())
-                    }
-                    
-                    val responseCode = responseCode
-                    val responseBody = if (responseCode == 200) {
-                        inputStream.bufferedReader().use { it.readText() }
-                    } else {
-                        errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-                    }
-                    
-                    Log.d(TAG, "Heartbeat response: $responseCode - $responseBody")
+                val jsonBody = JSONObject().apply {
+                    put("client_type", "gameplaza")
+                    put("status", if (!gameName.isNullOrEmpty()) "playing" else "online")
+                    gameName?.let { put("game", it) }
                 }
                 
-                connection.disconnect()
-            } catch (e: Exception) {
-                Log.e(TAG, "Heartbeat failed: ${e.message}", e)
+                outputStream.use { os ->
+                    os.write(jsonBody.toString().toByteArray())
+                }
+                
+                val responseCode = responseCode
+                if (responseCode != 200) {
+                    val errorBody = errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                    Log.e(TAG, "Heartbeat failed: $responseCode - $errorBody")
+                }
             }
+            
+            connection.disconnect()
+        } catch (e: Exception) {
+            Log.e(TAG, "Heartbeat failed: ${e.message}")
         }
     }
     
