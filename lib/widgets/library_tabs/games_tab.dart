@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../models/models.dart';
 import '../../services/game_library_service.dart';
+import '../../l10n/app_localizations.dart';
 
 class GamesTab extends StatefulWidget {
   final List<Game> games;
@@ -77,8 +78,9 @@ class _GamesTabState extends State<GamesTab> {
             children: [
               Text(
                 widget.searchQuery.isEmpty
-                    ? 'Press Y to search games'
-                    : 'Filter: ${widget.searchQuery}',
+                    ? AppLocalizations.of(context).librarySearchOnlyHint
+                    : AppLocalizations.of(context)
+                        .libraryFilterLabel(widget.searchQuery),
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               const Spacer(),
@@ -88,7 +90,7 @@ class _GamesTabState extends State<GamesTab> {
                 color: AppColors.textPrimary,
                 focusNode:
                     FocusNode(skipTraversal: true, canRequestFocus: false),
-                tooltip: 'Search games (Y)',
+                tooltip: AppLocalizations.of(context).librarySearchTooltip,
               ),
             ],
           ),

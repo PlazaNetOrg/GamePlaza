@@ -165,10 +165,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get langSelectLanguage => 'Wybierz język';
 
   @override
-  String get langEnglish => 'English';
+  String get langEnglish => 'Angielski';
 
   @override
   String get langPolish => 'Polski';
+
+  @override
+  String get langJapanese => 'Japoński';
 
   @override
   String get settingsTitle => 'Ustawienia';
@@ -313,6 +316,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get libraryReloadSearchHint => 'Naciśnij X, aby odświeżyć; Y, aby wyszukać';
+
+  @override
+  String get librarySearchOnlyHint => 'Naciśnij Y, aby wyszukać';
 
   @override
   String libraryFilterLabel(String query) => 'Filtr: $query';

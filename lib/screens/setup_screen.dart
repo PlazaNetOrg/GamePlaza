@@ -349,6 +349,10 @@ class _SetupScreenState extends State<SetupScreen> {
               value: 'pl',
               child: Text(AppLocalizations.of(context).langPolish),
             ),
+            DropdownMenuItem(
+              value: 'ja',
+              child: Text(AppLocalizations.of(context).langJapanese),
+            ),
           ],
           onChanged: (value) async {
             if (value != null) {

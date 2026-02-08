@@ -119,3 +119,5 @@ app.*.symbols
 !/dev/ci/**/Gemfile.lock
 
 .idea/*
+
+andus-build.sh

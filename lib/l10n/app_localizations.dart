@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_ja.dart';
 import 'app_localizations_pl.dart';
 
 abstract class AppLocalizations {
@@ -12,6 +13,7 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = [
     Locale('en'),
     Locale('pl'),
+    Locale('ja'),
   ];
 
   // Navigation
@@ -79,6 +81,7 @@ abstract class AppLocalizations {
   String get langSelectLanguage;
   String get langEnglish;
   String get langPolish;
+  String get langJapanese;
 
   // Settings
   String get settingsTitle;
@@ -131,6 +134,7 @@ abstract class AppLocalizations {
   String get libraryTabAllApps;
   String get libraryNoApps;
   String get libraryReloadSearchHint;
+  String get librarySearchOnlyHint;
   String libraryFilterLabel(String query);
   String get libraryReloadTooltip;
   String get librarySearchTooltip;
@@ -226,12 +230,14 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
 
   @override
   bool isSupported(Locale locale) {
-    return ['en', 'pl'].contains(locale.languageCode);
+    return ['en', 'pl', 'ja'].contains(locale.languageCode);
   }
 
   @override
   Future<AppLocalizations> load(Locale locale) async {
     switch (locale.languageCode) {
+      case 'ja':
+        return AppLocalizationsJa();
       case 'pl':
         return AppLocalizationsPl();
       case 'en':

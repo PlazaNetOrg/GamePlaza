@@ -168,7 +168,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get langEnglish => 'English';
 
   @override
-  String get langPolish => 'Polski';
+  String get langPolish => 'Polish';
+
+  @override
+  String get langJapanese => 'Japanese';
 
   @override
   String get settingsTitle => 'Settings';
@@ -313,6 +316,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryReloadSearchHint => 'Press X to reload, Y to search';
+
+  @override
+  String get librarySearchOnlyHint => 'Press Y to search';
 
   @override
   String libraryFilterLabel(String query) => 'Filter: $query';

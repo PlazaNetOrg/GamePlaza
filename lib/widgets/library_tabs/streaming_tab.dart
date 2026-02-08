@@ -108,18 +108,10 @@ class _StreamingTabState extends State<StreamingTab> {
           child: Row(
             children: [
               Text(
-                AppLocalizations.of(context).libraryReloadSearchHint,
+                AppLocalizations.of(context).librarySearchOnlyHint,
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               const Spacer(),
-              IconButton(
-                onPressed: widget.onReloadPressed,
-                icon: const Icon(Icons.refresh),
-                tooltip: AppLocalizations.of(context).libraryReloadTooltip,
-                color: AppColors.textPrimary,
-                focusNode:
-                    FocusNode(skipTraversal: true, canRequestFocus: false),
-              ),
               IconButton(
                 onPressed: widget.onSearchPressed,
                 icon: const Icon(Icons.search),
