@@ -5,10 +5,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.LauncherApps
+import android.hardware.display.DisplayManager
+import android.view.Display
 import android.content.pm.ShortcutInfo
 import android.os.Build
 import android.os.Bundle
 import android.os.UserHandle
+import android.app.ActivityOptions
+import android.app.AppOpsManager
+import android.app.usage.UsageStatsManager
+import android.media.AudioManager
+import android.provider.Settings
+import android.os.BatteryManager
+import androidx.core.app.NotificationManagerCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -18,10 +27,17 @@ class MainActivity : FlutterActivity() {
     private val CHANNEL = "org.plazanet.gameplaza/shortcuts"
     private val PRESENCE_CHANNEL = "org.plazanet.gameplaza/presence"
     private val ANDROID_CHANNEL = "org.plazanet.gameplaza/android"
+    private val DISPLAY_CHANNEL = "org.plazanet.gameplaza/display"
+    private val DISPLAY_EVENT_CHANNEL = "org.plazanet.gameplaza/display/events"
+    private val NOTIFICATION_CHANNEL = "org.plazanet.gameplaza/notifications"
+    private val NOTIFICATION_EVENT_CHANNEL = "org.plazanet.gameplaza/notifications/events"
     private var pendingShortcut: Map<String, Any?>? = null
     private var eventSink: EventChannel.EventSink? = null
+    private var displayEventSink: EventChannel.EventSink? = null
     private var dynamicReceiver: BroadcastReceiver? = null
     private var launcherAppsCallback: LauncherApps.Callback? = null
+    private var displayManager: DisplayManager? = null
+    private var displayListener: DisplayManager.DisplayListener? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -29,6 +45,19 @@ class MainActivity : FlutterActivity() {
         // Android settings channel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ANDROID_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "getSystemStatus" -> {
+                    result.success(getSystemStatus())
+                }
+                "setVolume" -> {
+                    val value = call.argument<Double>("value") ?: 0.0
+                    setVolume(value)
+                    result.success(getSystemStatus())
+                }
+                "setMuted" -> {
+                    val muted = call.argument<Boolean>("muted") ?: false
+                    setMuted(muted)
+                    result.success(getSystemStatus())
+                }
                 "openSettings" -> {
                     try {
                         val intent = Intent(android.provider.Settings.ACTION_SETTINGS)
@@ -38,6 +67,89 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.error("SETTINGS_ERROR", e.message, null)
                     }
+                }
+                "hasUsageAccess" -> {
+                    result.success(hasUsageAccess())
+                }
+                "openUsageAccessSettings" -> {
+                    try {
+                        val intent = Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("USAGE_SETTINGS_ERROR", e.message, null)
+                    }
+                }
+                "getRecentApps" -> {
+                    val limit = call.argument<Int>("limit") ?: 8
+                    val maxAgeMs = call.argument<Long>("maxAgeMs") ?: 120000L
+                    result.success(getRecentApps(limit, maxAgeMs))
+                }
+                "launchAppOnDisplay" -> {
+                    val packageName = call.argument<String>("packageName")
+                    val displayId = call.argument<Int>("displayId")
+                    val requestFreeform = call.argument<Boolean>("requestFreeform") ?: false
+
+                    if (packageName == null) {
+                        result.error("INVALID_ARGS", "packageName required", null)
+                        return@setMethodCallHandler
+                    }
+
+                    try {
+                        val intent = packageManager.getLaunchIntentForPackage(packageName)
+                        if (intent == null) {
+                            result.error("NOT_FOUND", "No launch intent for $packageName", null)
+                            return@setMethodCallHandler
+                        }
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                        val options = ActivityOptions.makeBasic()
+                        if (displayId != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            options.setLaunchDisplayId(displayId)
+                        }
+                        if (requestFreeform && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            try {
+                                val method = ActivityOptions::class.java.getMethod(
+                                    "setLaunchWindowingMode",
+                                    Int::class.javaPrimitiveType
+                                )
+                                method.invoke(options, 5)
+                            } catch (_: Exception) {
+                            }
+                        }
+                        startActivity(intent, options.toBundle())
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("LAUNCH_ERROR", e.message, null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NOTIFICATION_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getNotifications" -> result.success(NotificationBridge.getNotifications())
+                "hasNotificationAccess" -> {
+                    result.success(NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName))
+                }
+                "openNotificationAccessSettings" -> {
+                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(intent)
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // Display info channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DISPLAY_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getDisplayState" -> {
+                    result.success(getDisplayState())
                 }
                 else -> result.notImplemented()
             }
@@ -113,10 +225,39 @@ class MainActivity : FlutterActivity() {
                 }
             }
         )
+
+        // Event channel for display changes
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, DISPLAY_EVENT_CHANNEL).setStreamHandler(
+            object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                    displayEventSink = events
+                    registerDisplayListener()
+                    sendDisplayState()
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    displayEventSink = null
+                    unregisterDisplayListener()
+                }
+            }
+        )
+
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, NOTIFICATION_EVENT_CHANNEL).setStreamHandler(
+            object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                    NotificationBridge.setEventSink(events)
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    NotificationBridge.setEventSink(null)
+                }
+            }
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
         registerDynamicShortcutReceiver()
         registerLauncherAppsCallback()
         handleIntent(intent)
@@ -208,6 +349,8 @@ class MainActivity : FlutterActivity() {
             } catch (e: Exception) {
             }
         }
+
+        unregisterDisplayListener()
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             launcherAppsCallback?.let {
@@ -220,6 +363,170 @@ class MainActivity : FlutterActivity() {
         }
         
         super.onDestroy()
+    }
+
+    private fun hasUsageAccess(): Boolean {
+        return try {
+            val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            val mode = appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                packageName
+            )
+            mode == AppOpsManager.MODE_ALLOWED
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun getRecentApps(limit: Int, maxAgeMs: Long): List<Map<String, Any>> {
+        if (!hasUsageAccess()) return emptyList()
+        val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val now = System.currentTimeMillis()
+        val start = now - 1000L * 60 * 60 * 24
+        val stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, start, now)
+        if (stats.isNullOrEmpty()) return emptyList()
+
+        val sorted = stats
+            .filter { it.packageName != packageName }
+            .filter { now - it.lastTimeUsed <= maxAgeMs }
+            .sortedByDescending { it.lastTimeUsed }
+
+        val result = ArrayList<Map<String, Any>>()
+        val seen = HashSet<String>()
+        for (stat in sorted) {
+            val pkg = stat.packageName ?: continue
+            if (seen.contains(pkg)) continue
+            val label = try {
+                val appInfo = packageManager.getApplicationInfo(pkg, 0)
+                packageManager.getApplicationLabel(appInfo).toString()
+            } catch (e: Exception) {
+                pkg
+            }
+            result.add(mapOf(
+                "packageName" to pkg,
+                "label" to label
+            ))
+            seen.add(pkg)
+            if (result.size >= limit) break
+        }
+        return result
+    }
+
+    private fun getSystemStatus(): Map<String, Any?> {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        val volume = currentVolume.toDouble() / maxVolume.toDouble()
+        val muted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            audioManager.isStreamMute(AudioManager.STREAM_MUSIC)
+        } else {
+            currentVolume == 0
+        }
+        val (batteryLevel, charging) = getBatteryStatus()
+
+        return mapOf(
+            "volume" to volume,
+            "muted" to muted,
+            "batteryLevel" to batteryLevel,
+            "charging" to charging
+        )
+    }
+
+    private fun setVolume(value: Double) {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+        val clamped = value.coerceIn(0.0, 1.0)
+        val target = (clamped * maxVolume).toInt().coerceIn(0, maxVolume)
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+    }
+
+    private fun setMuted(muted: Boolean) {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            audioManager.adjustStreamVolume(
+                AudioManager.STREAM_MUSIC,
+                if (muted) AudioManager.ADJUST_MUTE else AudioManager.ADJUST_UNMUTE,
+                0
+            )
+        } else {
+            val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+            val target = if (muted) 0 else (maxVolume / 2).coerceAtLeast(1)
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+        }
+    }
+
+
+    private fun getBatteryStatus(): Pair<Double, Boolean> {
+        val intent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        val status = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        val charging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+            status == BatteryManager.BATTERY_STATUS_FULL
+        val ratio = if (level >= 0 && scale > 0) {
+            level.toDouble() / scale.toDouble()
+        } else {
+            0.0
+        }
+        return Pair(ratio, charging)
+    }
+
+
+    private fun registerDisplayListener() {
+        if (displayListener != null) return
+        val manager = displayManager ?: (getSystemService(Context.DISPLAY_SERVICE) as DisplayManager).also {
+            displayManager = it
+        }
+        displayListener = object : DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) {
+                sendDisplayState()
+            }
+
+            override fun onDisplayRemoved(displayId: Int) {
+                sendDisplayState()
+            }
+
+            override fun onDisplayChanged(displayId: Int) {
+                sendDisplayState()
+            }
+        }
+        manager.registerDisplayListener(displayListener, null)
+    }
+
+    private fun unregisterDisplayListener() {
+        val manager = displayManager ?: return
+        displayListener?.let {
+            manager.unregisterDisplayListener(it)
+        }
+        displayListener = null
+    }
+
+    private fun sendDisplayState() {
+        displayEventSink?.success(getDisplayState())
+    }
+
+    private fun getDisplayState(): Map<String, Any?> {
+        val manager = displayManager ?: getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        displayManager = manager
+
+        val displayCount = manager.displays.size
+        val currentDisplay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display
+        } else {
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay
+        }
+        val currentDisplayId = currentDisplay?.displayId ?: Display.DEFAULT_DISPLAY
+        val defaultDisplayId = Display.DEFAULT_DISPLAY
+
+        return mapOf(
+            "displayCount" to displayCount,
+            "hasExternalDisplay" to (displayCount > 1),
+            "isOnExternalDisplay" to (currentDisplayId != defaultDisplayId),
+            "currentDisplayId" to currentDisplayId,
+            "defaultDisplayId" to defaultDisplayId
+        )
     }
 
     override fun onNewIntent(intent: Intent) {

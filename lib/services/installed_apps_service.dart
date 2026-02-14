@@ -47,6 +47,27 @@ class InstalledAppsService {
     }
   }
 
+  Future<bool> launchAppOnDisplay(
+    String packageName, {
+    int? displayId,
+    bool requestFreeform = false,
+  }) async {
+    try {
+      const platform = MethodChannel('org.plazanet.gameplaza/android');
+      final result = await platform.invokeMethod<bool>(
+        'launchAppOnDisplay',
+        {
+          'packageName': packageName,
+          'displayId': displayId,
+          'requestFreeform': requestFreeform,
+        },
+      );
+      return result ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<bool> openAppSettings(String packageName) async {
     try {
       InstalledApps.openSettings(packageName);

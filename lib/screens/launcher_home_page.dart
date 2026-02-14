@@ -20,12 +20,14 @@ import '../services/game_art_service.dart';
 import '../services/installed_apps_service.dart';
 import '../services/shortcut_service.dart';
 import '../services/presence_service.dart';
+import '../services/display_service.dart';
 import '../shortcuts/app_intents.dart';
 import 'package:collection/collection.dart';
 import '_widgets/sidebar_widget.dart';
 import '_widgets/top_bar_widget.dart';
 import '_widgets/action_guide_widget.dart';
 import '../l10n/app_localizations.dart';
+import 'desktop_mode_screen.dart';
 
 class LauncherHomePage extends StatefulWidget {
   const LauncherHomePage({super.key});
@@ -42,6 +44,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   final GameArtService _gameArtService = GameArtService();
   final ShortcutService _shortcutService = ShortcutService();
   final PresenceService _presenceService = PresenceService();
+  final DisplayService _displayService = DisplayService();
 
   // Game data
   List<Game> _games = [];
@@ -71,6 +74,10 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   final Battery _battery = Battery();
   StreamSubscription<BatteryState>? _batterySubscription;
   StreamSubscription<ShortcutInfo>? _shortcutSubscription;
+  StreamSubscription<DisplayState>? _displaySubscription;
+
+  // Desktop mode
+  bool _desktopMode = false;
 
   // Play session tracking
   static const String _playSessionStartKey = 'play_session_start_ms';
@@ -108,6 +115,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     _updateTime();
     _updateBattery();
     _initShortcutService();
+    _initDisplayMode();
     _restorePendingPlaySession();
     _initializePresence();
 
@@ -124,6 +132,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     _timer?.cancel();
     _batterySubscription?.cancel();
     _shortcutSubscription?.cancel();
+    _displaySubscription?.cancel();
     _tabController.dispose();
     _playButtonFocusNode.dispose();
     WidgetsBinding.instance.removeObserver(this);
@@ -146,6 +155,23 @@ class _LauncherHomePageState extends State<LauncherHomePage>
         return g.shortcutId == null;
       });
       if (game != null) _launchGame(game);
+    });
+  }
+
+  void _initDisplayMode() async {
+    final state = await _displayService.getDisplayState();
+    if (state != null && mounted) {
+      _applyDisplayState(state);
+    }
+    _displaySubscription = _displayService.displayChanges().listen((state) {
+      if (!mounted) return;
+      _applyDisplayState(state);
+    });
+  }
+
+  void _applyDisplayState(DisplayState state) {
+    setState(() {
+      _desktopMode = state.isOnExternalDisplay;
     });
   }
 
@@ -660,30 +686,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
               }
             },
             child: Scaffold(
-              body: Row(
-                children: [
-                  SidebarWidget(
-                    selectedIndex: _selectedIndex,
-                    navItems: _navItems(context),
-                    userName: _userName,
-                    currentTime: _currentTime,
-                    batteryLevel: _batteryLevel,
-                    batteryState: _batteryState,
-                    onNavItemPressed: (index) => setState(() {
-                      _selectedIndex = index;
-                      _selectedGame = null;
-                    }),
-                  ),
-                  Expanded(
-                    child: FocusTraversalGroup(
-                      policy: ReadingOrderTraversalPolicy(),
-                      child: _selectedGame != null
-                          ? _buildGameDetailView()
-                          : _buildScreenContent(),
-                    ),
-                  ),
-                ],
-              ),
+              body: _desktopMode ? _buildDesktopMode() : _buildNormalBody(),
             ),
           ),
         ),
@@ -695,86 +698,110 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     return Column(
       children: [
         Expanded(
-          child: GameDetailDialog(
-            game: _selectedGame!,
-            onClose: () {
-              setState(() => _selectedGame = null);
-              _loadLibrary();
-            },
-            onLaunch: _launchGame,
-            onSetBanner: _setBannerForGameDetail,
-            onSetCover: _setCoverForGameDetail,
-            libraryService: _libraryService,
-            focusNode: _playButtonFocusNode,
-          ),
+          child: _buildGameDetailContent(),
         ),
         ActionGuideWidget(hints: _detailActionHints()),
       ],
     );
   }
 
+  Widget _buildGameDetailContent() {
+    return GameDetailDialog(
+      game: _selectedGame!,
+      onClose: () {
+        setState(() => _selectedGame = null);
+        _loadLibrary();
+      },
+      onLaunch: _launchGame,
+      onSetBanner: _setBannerForGameDetail,
+      onSetCover: _setCoverForGameDetail,
+      libraryService: _libraryService,
+      focusNode: _playButtonFocusNode,
+    );
+  }
+
+  Widget _buildHomeContent() {
+    final gamePackageNames = _games
+        .where((g) => g.packageName != null && g.shortcutId == null)
+        .map((g) => g.packageName!)
+        .toSet();
+    final appsCount = _installedApps
+        .where((app) => !gamePackageNames.contains(app.packageName))
+        .length;
+    return HomeScreen(
+      games: _games,
+      allAppsCount: appsCount,
+      isLoading: _isLoading,
+      onGoToLibrary: () => setState(() => _selectedIndex = 1),
+      onOpenGameDetail: _openGameDetail,
+      onLaunchGame: _launchGame,
+      coverImageProvider: _coverImage,
+      formatLastPlayed: _formatLastPlayed,
+    );
+  }
+
+  Widget _buildLibraryContent() {
+    return LibraryScreen(
+      games: _games,
+      installedApps: _installedApps,
+      isLoadingGames: _isLoading,
+      isLoadingApps: _isLoadingApps,
+      gamesSearchQuery: _searchQuery,
+      appsSearchQuery: _appsSearchQuery,
+      onGamesSearchPressed: () => _showSearchDialog('Search games', (v) => setState(() => _searchQuery = v)),
+      onAppsSearchPressed: () => _showSearchDialog('Search apps', (v) => setState(() => _appsSearchQuery = v)),
+      onAppsReloadPressed: _loadInstalledApps,
+      onGamesSearchQueryChanged: (v) => setState(() => _searchQuery = v),
+      onAppsSearchQueryChanged: (v) => setState(() => _appsSearchQuery = v),
+      onGameCardPressed: _openGameDetail,
+      coverImageProvider: _coverImage,
+      streamingCoverImageProvider: _streamingAppCoverImage,
+      streamingDisplayNameProvider: _streamingAppDisplayName,
+      appsService: _appsService,
+      onAddAsGame: _addGameFromApp,
+      onAddAsStreaming: _addStreamingApp,
+      onRemoveStreaming: _removeStreamingApp,
+      onSetStreamingCover: _setStreamingAppCover,
+      gameStreamingApps: _gameStreamingApps,
+      videoStreamingApps: _videoStreamingApps,
+      tabController: _tabController,
+      showGameStreaming: _showGameStreaming,
+      showVideoStreaming: _showVideoStreaming,
+    );
+  }
+
+  Widget _buildPlazaNetContent() {
+    final items = _navItems(context);
+    return PlazaNetScreen(label: items[2].label, icon: items[2].icon);
+  }
+
+  Widget _buildStoreContent() {
+    final items = _navItems(context);
+    return StoreScreen(label: items[3].label, icon: items[3].icon);
+  }
+
+  Widget _buildSettingsContent() {
+    return SettingsScreen(
+      libraryService: _libraryService,
+      appsService: _appsService,
+      presenceService: _presenceService,
+      onStreamingSettingsChanged: _applyStreamingTabSettings,
+      onSettingsChanged: _reloadAppData,
+    );
+  }
+
   Widget _buildScreenContent() {
     Widget body;
     if (_selectedIndex == 0) {
-      final gamePackageNames = _games
-          .where((g) => g.packageName != null && g.shortcutId == null)
-          .map((g) => g.packageName!)
-          .toSet();
-      final appsCount = _installedApps
-          .where((app) => !gamePackageNames.contains(app.packageName))
-          .length;
-      body = HomeScreen(
-        games: _games,
-        allAppsCount: appsCount,
-        isLoading: _isLoading,
-        onGoToLibrary: () => setState(() => _selectedIndex = 1),
-        onOpenGameDetail: _openGameDetail,
-        onLaunchGame: _launchGame,
-        coverImageProvider: _coverImage,
-        formatLastPlayed: _formatLastPlayed,
-      );
+      body = _buildHomeContent();
     } else if (_selectedIndex == 1) {
-      body = LibraryScreen(
-        games: _games,
-        installedApps: _installedApps,
-        isLoadingGames: _isLoading,
-        isLoadingApps: _isLoadingApps,
-        gamesSearchQuery: _searchQuery,
-        appsSearchQuery: _appsSearchQuery,
-        onGamesSearchPressed: () => _showSearchDialog('Search games', (v) => setState(() => _searchQuery = v)),
-        onAppsSearchPressed: () => _showSearchDialog('Search apps', (v) => setState(() => _appsSearchQuery = v)),
-        onAppsReloadPressed: _loadInstalledApps,
-        onGamesSearchQueryChanged: (v) => setState(() => _searchQuery = v),
-        onAppsSearchQueryChanged: (v) => setState(() => _appsSearchQuery = v),
-        onGameCardPressed: _openGameDetail,
-        coverImageProvider: _coverImage,
-        streamingCoverImageProvider: _streamingAppCoverImage,
-        streamingDisplayNameProvider: _streamingAppDisplayName,
-        appsService: _appsService,
-        onAddAsGame: _addGameFromApp,
-        onAddAsStreaming: _addStreamingApp,
-        onRemoveStreaming: _removeStreamingApp,
-        onSetStreamingCover: _setStreamingAppCover,
-        gameStreamingApps: _gameStreamingApps,
-        videoStreamingApps: _videoStreamingApps,
-        tabController: _tabController,
-        showGameStreaming: _showGameStreaming,
-        showVideoStreaming: _showVideoStreaming,
-      );
+      body = _buildLibraryContent();
     } else if (_selectedIndex == 2) {
-      final items = _navItems(context);
-      body = PlazaNetScreen(label: items[2].label, icon: items[2].icon);
+      body = _buildPlazaNetContent();
     } else if (_selectedIndex == 3) {
-      final items = _navItems(context);
-      body = StoreScreen(label: items[3].label, icon: items[3].icon);
+      body = _buildStoreContent();
     } else {
-      body = SettingsScreen(
-        libraryService: _libraryService,
-        appsService: _appsService,
-        presenceService: _presenceService,
-        onStreamingSettingsChanged: _applyStreamingTabSettings,
-        onSettingsChanged: _reloadAppData,
-      );
+      body = _buildSettingsContent();
     }
 
     return Column(
@@ -784,5 +811,36 @@ class _LauncherHomePageState extends State<LauncherHomePage>
         ActionGuideWidget(hints: _currentActionHints()),
       ],
     );
+  }
+
+  Widget _buildNormalBody() {
+    return Row(
+      children: [
+        SidebarWidget(
+          selectedIndex: _selectedIndex,
+          navItems: _navItems(context),
+          userName: _userName,
+          currentTime: _currentTime,
+          batteryLevel: _batteryLevel,
+          batteryState: _batteryState,
+          onNavItemPressed: (index) => setState(() {
+            _selectedIndex = index;
+            _selectedGame = null;
+          }),
+        ),
+        Expanded(
+          child: FocusTraversalGroup(
+            policy: ReadingOrderTraversalPolicy(),
+            child: _selectedGame != null
+                ? _buildGameDetailView()
+                : _buildScreenContent(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopMode() {
+    return const DesktopModeScreen();
   }
 }
