@@ -93,7 +93,7 @@ class _HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primaryBlue),
       );
     }
@@ -138,7 +138,7 @@ class _HomeTabState extends State<HomeTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
+        Icon(
           Icons.videogame_asset_outlined,
           size: 64,
           color: AppColors.textSecondary,
@@ -146,7 +146,7 @@ class _HomeTabState extends State<HomeTab> {
         const SizedBox(height: 16),
         Text(
           AppLocalizations.of(context).homeNoGamesTitle,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -155,7 +155,7 @@ class _HomeTabState extends State<HomeTab> {
         const SizedBox(height: 8),
         Text(
           AppLocalizations.of(context).homeNoGamesSubtitle,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 24),
         ElevatedButton.icon(
@@ -198,7 +198,7 @@ class _HomeTabState extends State<HomeTab> {
             children: [
               Text(
                 AppLocalizations.of(context).homeLastPlayedLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -207,7 +207,7 @@ class _HomeTabState extends State<HomeTab> {
               const SizedBox(height: 8),
               Text(
                 game.title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -220,7 +220,7 @@ class _HomeTabState extends State<HomeTab> {
                 game.lastPlayed != null
                     ? widget.formatLastPlayed(game.lastPlayed!)
                     : AppLocalizations.of(context).homeNeverPlayed,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
                 ),
@@ -254,7 +254,7 @@ class _HomeTabState extends State<HomeTab> {
         children: [
           Text(
             _currentTime,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 56,
               fontWeight: FontWeight.w300,
@@ -264,7 +264,7 @@ class _HomeTabState extends State<HomeTab> {
           const SizedBox(height: 4),
           Text(
             _currentDate,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 16,
             ),
@@ -272,7 +272,7 @@ class _HomeTabState extends State<HomeTab> {
           const Spacer(),
           _buildBatteryRow(),
           const SizedBox(height: 16),
-          const Divider(color: AppColors.divider),
+          Divider(color: AppColors.divider),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -356,7 +356,7 @@ class _HomeTabState extends State<HomeTab> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
             ),

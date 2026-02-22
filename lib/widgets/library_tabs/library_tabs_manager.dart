@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../services/game_library_service.dart';
 import '../../services/installed_apps_service.dart';
 import '../../shortcuts/app_intents.dart';
+import '../../models/layout_mode.dart';
 import 'games_tab.dart';
 import 'all_apps_tab.dart';
 import 'streaming_tab.dart';
@@ -23,8 +24,11 @@ class LibraryTabsManager extends StatefulWidget {
   final ValueChanged<String> onGamesSearchQueryChanged;
   final ValueChanged<String> onAppsSearchQueryChanged;
   final Function(Game) onGameCardPressed;
+  final Function(Game) onGameLaunch;
   final ImageProvider? Function(Game) coverImageProvider;
+  final ImageProvider? Function(Game) iconImageProvider;
   final ImageProvider? Function(AppInfo) streamingCoverImageProvider;
+  final ImageProvider? Function(AppInfo) streamingIconImageProvider;
   final String Function(AppInfo) streamingDisplayNameProvider;
   final InstalledAppsService appsService;
   final Function(String appName, String packageName)? onAddAsGame;
@@ -36,6 +40,7 @@ class LibraryTabsManager extends StatefulWidget {
   final TabController? tabController;
   final bool showGameStreaming;
   final bool showVideoStreaming;
+  final LayoutMode layoutMode;
 
   const LibraryTabsManager({
     super.key,
@@ -51,8 +56,11 @@ class LibraryTabsManager extends StatefulWidget {
     required this.onGamesSearchQueryChanged,
     required this.onAppsSearchQueryChanged,
     required this.onGameCardPressed,
+    required this.onGameLaunch,
     required this.coverImageProvider,
+    required this.iconImageProvider,
     required this.streamingCoverImageProvider,
+    required this.streamingIconImageProvider,
     required this.streamingDisplayNameProvider,
     required this.appsService,
     this.onAddAsGame,
@@ -64,6 +72,7 @@ class LibraryTabsManager extends StatefulWidget {
     this.tabController,
     this.showGameStreaming = false,
     this.showVideoStreaming = false,
+    required this.layoutMode,
   });
 
   @override
@@ -76,19 +85,28 @@ class _LibraryTabsManagerState extends State<LibraryTabsManager> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoadingGames) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
           color: AppColors.primaryBlue,
         ),
       );
     }
 
-    final tabs = <Widget>[
-      Tab(text: AppLocalizations.of(context).libraryTabGames),
+    final tabLabels = <String>[
+      AppLocalizations.of(context).libraryTabGames,
       if (_showStreamingTab)
-        Tab(text: AppLocalizations.of(context).libraryTabStreaming),
-      Tab(text: AppLocalizations.of(context).libraryTabAllApps),
+        AppLocalizations.of(context).libraryTabStreaming,
+      AppLocalizations.of(context).libraryTabAllApps,
     ];
+
+    final tabIcons = <IconData>[
+      Icons.videogame_asset_outlined,
+      if (_showStreamingTab)
+        Icons.cloud_circle_outlined,
+      Icons.apps_outlined,
+    ];
+
+    final tabs = tabLabels.map((label) => Tab(text: label)).toList();
 
     final tabChildren = <Widget>[
       GamesTab(
@@ -96,7 +114,10 @@ class _LibraryTabsManagerState extends State<LibraryTabsManager> {
         searchQuery: widget.gamesSearchQuery,
         onSearchPressed: widget.onGamesSearchPressed,
         onGameCardPressed: widget.onGameCardPressed,
+        onGameLaunch: widget.onGameLaunch,
         coverImageProvider: widget.coverImageProvider,
+        iconImageProvider: widget.iconImageProvider,
+        useIconLayout: widget.layoutMode == LayoutMode.handheld || widget.layoutMode == LayoutMode.compact,
         onSearchQueryChanged: widget.onGamesSearchQueryChanged,
       ),
       if (_showStreamingTab)
@@ -113,6 +134,8 @@ class _LibraryTabsManagerState extends State<LibraryTabsManager> {
           onRemoveStreaming: widget.onRemoveStreaming,
           onSetStreamingCover: widget.onSetStreamingCover,
           coverImageProvider: widget.streamingCoverImageProvider,
+          iconImageProvider: widget.streamingIconImageProvider,
+          useIconLayout: widget.layoutMode == LayoutMode.handheld || widget.layoutMode == LayoutMode.compact,
           displayNameProvider: widget.streamingDisplayNameProvider,
           gameStreamingApps: widget.gameStreamingApps,
           videoStreamingApps: widget.videoStreamingApps,
@@ -156,31 +179,96 @@ class _LibraryTabsManagerState extends State<LibraryTabsManager> {
             return null;
           }),
         },
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: TabBar(
-                controller: widget.tabController,
-                labelColor: AppColors.primaryBlue,
-                unselectedLabelColor: AppColors.textSecondary,
-                indicatorColor: AppColors.primaryBlue,
-                indicatorWeight: 3,
-                labelStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-                tabs: tabs,
+        child: widget.layoutMode == LayoutMode.handheld
+            ? Row(
+                children: [
+                  _HandheldTabRail(
+                    icons: tabIcons,
+                    controller: widget.tabController,
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      controller: widget.tabController,
+                      children: tabChildren,
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: TabBar(
+                      controller: widget.tabController,
+                      labelColor: AppColors.primaryBlue,
+                      unselectedLabelColor: AppColors.textSecondary,
+                      indicatorColor: AppColors.primaryBlue,
+                      indicatorWeight: 3,
+                      labelStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      tabs: tabs,
+                    ),
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      controller: widget.tabController,
+                      children: tabChildren,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Expanded(
-              child: TabBarView(
-                controller: widget.tabController,
-                children: tabChildren,
-              ),
-            ),
-          ],
+      ),
+    );
+  }
+}
+
+class _HandheldTabRail extends StatelessWidget {
+  final List<IconData> icons;
+  final TabController? controller;
+
+  const _HandheldTabRail({
+    required this.icons,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tabController = controller;
+    return Container(
+      width: 72,
+      decoration: BoxDecoration(
+        color: AppColors.elevatedSurface.withValues(alpha: 0.7),
+        border: Border(
+          right: BorderSide(color: AppColors.divider),
         ),
+      ),
+      child: Column(
+        children: List.generate(icons.length, (index) {
+          final isSelected = tabController?.index == index;
+          return Expanded(
+            child: InkWell(
+              onTap: () => tabController?.animateTo(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primaryBlue : AppColors.darkSurface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: isSelected ? AppColors.primaryBlue : AppColors.divider),
+                ),
+                child: Center(
+                  child: Icon(
+                    icons[index],
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    size: 26,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }

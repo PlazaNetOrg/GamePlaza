@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
+import '../models/layout_mode.dart';
 import '../services/game_library_service.dart';
 import '../services/installed_apps_service.dart';
 import '../widgets/library_tabs/library_tabs_manager.dart';
@@ -17,8 +18,11 @@ class LibraryScreen extends StatelessWidget {
   final ValueChanged<String> onGamesSearchQueryChanged;
   final ValueChanged<String> onAppsSearchQueryChanged;
   final Function(Game) onGameCardPressed;
+  final Function(Game) onGameLaunch;
   final ImageProvider? Function(Game) coverImageProvider;
+  final ImageProvider? Function(Game) iconImageProvider;
   final ImageProvider? Function(AppInfo) streamingCoverImageProvider;
+  final ImageProvider? Function(AppInfo) streamingIconImageProvider;
   final String Function(AppInfo) streamingDisplayNameProvider;
   final InstalledAppsService appsService;
   final Function(String appName, String packageName)? onAddAsGame;
@@ -30,6 +34,7 @@ class LibraryScreen extends StatelessWidget {
   final TabController? tabController;
   final bool showGameStreaming;
   final bool showVideoStreaming;
+  final LayoutMode layoutMode;
 
   const LibraryScreen({
     super.key,
@@ -45,8 +50,11 @@ class LibraryScreen extends StatelessWidget {
     required this.onGamesSearchQueryChanged,
     required this.onAppsSearchQueryChanged,
     required this.onGameCardPressed,
+    required this.onGameLaunch,
     required this.coverImageProvider,
+    required this.iconImageProvider,
     required this.streamingCoverImageProvider,
+    required this.streamingIconImageProvider,
     required this.streamingDisplayNameProvider,
     required this.appsService,
     this.onAddAsGame,
@@ -58,6 +66,7 @@ class LibraryScreen extends StatelessWidget {
     this.tabController,
     this.showGameStreaming = false,
     this.showVideoStreaming = false,
+    required this.layoutMode,
   });
 
   @override
@@ -75,8 +84,11 @@ class LibraryScreen extends StatelessWidget {
       onGamesSearchQueryChanged: onGamesSearchQueryChanged,
       onAppsSearchQueryChanged: onAppsSearchQueryChanged,
       onGameCardPressed: onGameCardPressed,
+      onGameLaunch: onGameLaunch,
       coverImageProvider: coverImageProvider,
+      iconImageProvider: iconImageProvider,
       streamingCoverImageProvider: streamingCoverImageProvider,
+      streamingIconImageProvider: streamingIconImageProvider,
       streamingDisplayNameProvider: streamingDisplayNameProvider,
       appsService: appsService,
       onAddAsGame: onAddAsGame,
@@ -88,6 +100,7 @@ class LibraryScreen extends StatelessWidget {
       tabController: tabController,
       showGameStreaming: showGameStreaming,
       showVideoStreaming: showVideoStreaming,
+      layoutMode: layoutMode,
     );
   }
 }

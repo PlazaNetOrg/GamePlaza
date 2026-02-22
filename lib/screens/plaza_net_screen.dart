@@ -44,7 +44,7 @@ class _ComingSoonPlaceholder extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             AppLocalizations.of(context).plazaNetComingSoonTitle(label),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -53,7 +53,7 @@ class _ComingSoonPlaceholder extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             AppLocalizations.of(context).plazaNetComingSoonSubtitle,
-            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
         ],
       ),

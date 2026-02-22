@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-enum GameArtType { cover, banner }
+enum GameArtType { cover, banner, icon }
 
 class GameArtService {
   Future<Directory> _gameArtRoot() async {
@@ -27,7 +27,11 @@ class GameArtService {
       await gameDir.create(recursive: true);
     }
 
-    final pattern = type == GameArtType.cover ? 'cover' : 'banner';
+    final pattern = type == GameArtType.cover
+        ? 'cover'
+        : type == GameArtType.banner
+            ? 'banner'
+            : 'icon';
     final existing = gameDir
         .listSync()
         .whereType<File>()

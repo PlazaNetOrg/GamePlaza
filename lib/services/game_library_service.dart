@@ -14,6 +14,7 @@ class GameLibraryService {
   static const String _gameStreamingAppsKey = 'game_streaming_apps';
   static const String _videoStreamingAppsKey = 'video_streaming_apps';
   static const String _streamingAppCoversKey = 'streaming_app_covers';
+  static const String _streamingAppIconsKey = 'streaming_app_icons';
   static const String _streamingAppNamesKey = 'streaming_app_names';
 
   Future<void> saveGames(List<Game> games) async {
@@ -264,6 +265,37 @@ class GameLibraryService {
       await prefs.setString(_streamingAppCoversKey, json.encode(covers));
     }
   }
+
+  Future<String?> getStreamingAppIconPath(String packageName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final iconsJson = prefs.getString(_streamingAppIconsKey);
+    if (iconsJson == null) return null;
+    
+    try {
+      final icons = json.decode(iconsJson) as Map<String, dynamic>;
+      return icons[packageName] as String?;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> setStreamingAppIconPath(String packageName, String? iconPath) async {
+    final prefs = await SharedPreferences.getInstance();
+    final iconsJson = prefs.getString(_streamingAppIconsKey) ?? '{}';
+    
+    try {
+      final icons = json.decode(iconsJson) as Map<String, dynamic>;
+      if (iconPath == null) {
+        icons.remove(packageName);
+      } else {
+        icons[packageName] = iconPath;
+      }
+      await prefs.setString(_streamingAppIconsKey, json.encode(icons));
+    } catch (e) {
+      final icons = {packageName: iconPath};
+      await prefs.setString(_streamingAppIconsKey, json.encode(icons));
+    }
+  }
 }
 
 class Game {
@@ -271,8 +303,10 @@ class Game {
   final String title;
   final String coverUrl;
   final String bannerUrl;
+  final String? iconUrl;
   final String? localCoverPath;
   final String? localBannerPath;
+  final String? localIconPath;
   final DateTime? lastPlayed;
   final int playTimeSeconds;
   final String? packageName;
@@ -285,8 +319,10 @@ class Game {
     required this.title,
     required this.coverUrl,
     required this.bannerUrl,
+    this.iconUrl,
     this.localCoverPath,
     this.localBannerPath,
+    this.localIconPath,
     this.lastPlayed,
     required this.playTimeSeconds,
     this.packageName,
@@ -301,8 +337,10 @@ class Game {
       'title': title,
       'coverUrl': coverUrl,
       'bannerUrl': bannerUrl,
+      'iconUrl': iconUrl,
       'localCoverPath': localCoverPath,
       'localBannerPath': localBannerPath,
+      'localIconPath': localIconPath,
       'lastPlayed': lastPlayed?.toIso8601String(),
       'playTimeSeconds': playTimeSeconds,
       'packageName': packageName,
@@ -328,8 +366,10 @@ class Game {
       title: json['title'] as String,
       coverUrl: json['coverUrl'] as String,
       bannerUrl: json['bannerUrl'] as String,
+        iconUrl: json['iconUrl'] as String?,
       localCoverPath: json['localCoverPath'] as String?,
       localBannerPath: json['localBannerPath'] as String?,
+        localIconPath: json['localIconPath'] as String?,
       lastPlayed: json['lastPlayed'] != null
           ? DateTime.parse(json['lastPlayed'] as String)
           : null,
@@ -346,8 +386,10 @@ class Game {
     String? title,
     String? coverUrl,
     String? bannerUrl,
+    String? iconUrl,
     String? localCoverPath,
     String? localBannerPath,
+    String? localIconPath,
     DateTime? lastPlayed,
     int? playTimeSeconds,
     String? packageName,
@@ -360,8 +402,10 @@ class Game {
       title: title ?? this.title,
       coverUrl: coverUrl ?? this.coverUrl,
       bannerUrl: bannerUrl ?? this.bannerUrl,
+      iconUrl: iconUrl ?? this.iconUrl,
       localCoverPath: localCoverPath ?? this.localCoverPath,
       localBannerPath: localBannerPath ?? this.localBannerPath,
+      localIconPath: localIconPath ?? this.localIconPath,
       lastPlayed: lastPlayed ?? this.lastPlayed,
       playTimeSeconds: playTimeSeconds ?? this.playTimeSeconds,
       packageName: packageName ?? this.packageName,

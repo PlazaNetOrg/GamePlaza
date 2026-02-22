@@ -115,21 +115,100 @@ class _SetupScreenState extends State<SetupScreen> {
     }
   }
 
+  Future<void> _showSteamGridDbDialog() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        bool obscured = true;
+        return AlertDialog(
+          backgroundColor: AppColors.elevatedSurface,
+          title: Text(
+            AppLocalizations.of(context).setupSteamGridDbTitle,
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).setupSteamGridDbDescription,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _apiKeyController,
+                    style: TextStyle(color: AppColors.textPrimary),
+                    obscureText: obscured,
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context).setupSteamGridDbApiHint,
+                      hintStyle: TextStyle(color: AppColors.textSecondary),
+                      filled: true,
+                      fillColor: AppColors.darkSurface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscured ? Icons.visibility : Icons.visibility_off,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () => setState(() => obscured = !obscured),
+                      ),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () {
+                _apiKeyController.clear();
+                Navigator.pop(context);
+                if (mounted) setState(() {});
+              },
+              child: Text('Clear', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (mounted) setState(() {});
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+              ),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   List<Widget> _buildStepWidgets() {
     switch (_currentStep) {
       case 0:
         return [
           Text(
             AppLocalizations.of(context).setupNameLabel,
-            style: const TextStyle(fontSize: 20, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 20, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 24),
           TextField(
             controller: _nameController,
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: AppLocalizations.of(context).setupNameHint,
-              hintStyle: const TextStyle(color: AppColors.textSecondary),
+              hintStyle: TextStyle(color: AppColors.textSecondary),
               filled: true,
               fillColor: AppColors.elevatedSurface,
               border: OutlineInputBorder(
@@ -147,7 +226,7 @@ class _SetupScreenState extends State<SetupScreen> {
           const SizedBox(height: 24),
           Text(
             AppLocalizations.of(context).langSelectLanguage,
-            style: const TextStyle(fontSize: 16, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 16, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildLanguageSelector(context),
@@ -161,26 +240,26 @@ class _SetupScreenState extends State<SetupScreen> {
         return [
           Text(
             AppLocalizations.of(context).setupGreeting(_nameController.text),
-            style: const TextStyle(fontSize: 20, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 20, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context).setupConnectPrompt,
-            style: const TextStyle(fontSize: 18, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 18, color: AppColors.textPrimary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
             AppLocalizations.of(context).setupConnectDescription,
-            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
           SwitchListTile(
-            title: Text(AppLocalizations.of(context).setupPlazaNetTitle, style: const TextStyle(color: AppColors.textPrimary)),
+            title: Text(AppLocalizations.of(context).setupPlazaNetTitle, style: TextStyle(color: AppColors.textPrimary)),
             subtitle: Text(
               AppLocalizations.of(context).setupConnectOptional,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
             value: _plazaNetLogin,
             onChanged: (value) => setState(() => _plazaNetLogin = value),
@@ -190,17 +269,17 @@ class _SetupScreenState extends State<SetupScreen> {
             const SizedBox(height: 24),
             Text(
               AppLocalizations.of(context).setupPlazaNetAccountTitle,
-              style: const TextStyle(fontSize: 16, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _plazanetUrlController,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context).setupPlazaNetUrl,
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
+                labelStyle: TextStyle(color: AppColors.textSecondary),
                 hintText: 'https://accounts.plazanet.org',
-                hintStyle: const TextStyle(color: AppColors.textSecondary),
+                hintStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.elevatedSurface,
                 border: OutlineInputBorder(
@@ -212,12 +291,12 @@ class _SetupScreenState extends State<SetupScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _plazanetUsernameController,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context).setupPlazaNetUsername,
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
+                labelStyle: TextStyle(color: AppColors.textSecondary),
                 hintText: AppLocalizations.of(context).setupPlazaNetUsername,
-                hintStyle: const TextStyle(color: AppColors.textSecondary),
+                hintStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.elevatedSurface,
                 border: OutlineInputBorder(
@@ -230,12 +309,12 @@ class _SetupScreenState extends State<SetupScreen> {
             TextField(
               controller: _plazanetPasswordController,
               obscureText: true,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context).setupPlazaNetPassword,
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
+                labelStyle: TextStyle(color: AppColors.textSecondary),
                 hintText: AppLocalizations.of(context).setupPlazaNetPassword,
-                hintStyle: const TextStyle(color: AppColors.textSecondary),
+                hintStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.elevatedSurface,
                 border: OutlineInputBorder(
@@ -275,35 +354,41 @@ class _SetupScreenState extends State<SetupScreen> {
         return [
           Text(
             AppLocalizations.of(context).setupSteamGridDbTitle,
-            style: const TextStyle(fontSize: 20, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 20, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context).setupSteamGridDbDescription,
-            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             AppLocalizations.of(context).setupSteamGridDbHint,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          TextField(
-            controller: _apiKeyController,
-            style: const TextStyle(color: AppColors.textPrimary),
-            decoration: InputDecoration(
-              hintText: AppLocalizations.of(context).setupSteamGridDbApiHint,
-              hintStyle: const TextStyle(color: AppColors.textSecondary),
-              filled: true,
-              fillColor: AppColors.elevatedSurface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _apiKeyController.text.trim().isEmpty
+                    ? AppLocalizations.of(context).settingsNotSet
+                    : AppLocalizations.of(context).settingsConnected,
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
-            ),
-            textAlign: TextAlign.center,
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: _showSteamGridDbDialog,
+                icon: Icon(Icons.vpn_key, size: 18, color: AppColors.primaryBlue),
+                label: Text('Set key', style: TextStyle(color: AppColors.primaryBlue)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.primaryBlue),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           Row(
@@ -339,7 +424,7 @@ class _SetupScreenState extends State<SetupScreen> {
           isExpanded: true,
           underline: const SizedBox(),
           dropdownColor: AppColors.elevatedSurface,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
           items: [
             DropdownMenuItem(
               value: 'en',
@@ -388,7 +473,7 @@ class _SetupScreenState extends State<SetupScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 48),
-              const Icon(
+              Icon(
                 Icons.games,
                 size: 80,
                 color: AppColors.textSecondary,
@@ -396,7 +481,7 @@ class _SetupScreenState extends State<SetupScreen> {
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context).setupWelcomeTitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,

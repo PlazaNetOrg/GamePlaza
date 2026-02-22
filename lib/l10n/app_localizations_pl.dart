@@ -186,6 +186,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsIntegrations => 'Integracje';
 
   @override
+  String get settingsAppearance => 'Wygląd';
+
+  @override
   String get settingsNotSet => 'Nie ustawiono';
 
   @override
@@ -238,6 +241,33 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsSteamGridDbHint => 'Wklej tutaj swój klucz API';
+
+  @override
+  String get settingsLayout => 'Układ ekranu głównego';
+
+  @override
+  String get settingsLayoutDesc => 'Wybierz, jak ma wyglądać menu i biblioteka';
+
+  @override
+  String get settingsLayoutClassic => 'Tryb TV';
+
+  @override
+  String get settingsLayoutHandheld => 'Menu kieszonkowe';
+
+  @override
+  String get settingsLayoutCompact => 'Kompaktowe kafelki';
+
+  @override
+  String get settingsColorPalette => 'Paleta kolorów';
+
+  @override
+  String get settingsColorPaletteDesc => 'Zmień motyw kolorystyczny aplikacji';
+
+  @override
+  String get settingsColorPalettePlazaNet => 'PlazaNet (Żywy niebieski)';
+
+  @override
+  String get settingsColorPaletteNostalgiaWhite => 'Nostalgia White (Czysty i jasny)';
 
   @override
   String get settingsStreaming => 'Streaming';
@@ -402,6 +432,9 @@ class AppLocalizationsPl extends AppLocalizations {
     String get gameDetailsSetBanner => 'Ustaw baner';
 
     @override
+    String get gameDetailsSetIcon => 'Ustaw ikonę';
+
+    @override
     String get gameDetailsManagement => 'Zarządzanie';
 
     @override
@@ -464,6 +497,9 @@ class AppLocalizationsPl extends AppLocalizations {
     String get gameDialogsAvailableBanners => 'Dostępne banery';
 
     @override
+    String get gameDialogsAvailableIcons => 'Dostępne ikony';
+
+    @override
     String gameDialogsImagesCount(int count) => '$count obrazów';
 
     @override
@@ -476,16 +512,34 @@ class AppLocalizationsPl extends AppLocalizations {
     String get gameDialogsNoBanners => 'Brak banerów\ndla tej gry';
 
     @override
+    String get gameDialogsNoIcons => 'Brak ikon\ndla tej gry';
+
+    @override
+    String get gameDialogsSelectCover => 'Wybierz okładkę';
+
+    @override
+    String get gameDialogsSelectBanner => 'Wybierz baner';
+
+    @override
+    String get gameDialogsSelectIcon => 'Wybierz ikonę';
+
+    @override
     String get gameDialogsSetCover => 'Ustaw okładkę';
 
     @override
     String get gameDialogsSetBanner => 'Ustaw baner';
 
     @override
+    String get gameDialogsSetIcon => 'Ustaw ikonę';
+
+    @override
     String get gameDialogsCoverUpdated => 'Okładka zaktualizowana!';
 
     @override
     String get gameDialogsBannerUpdated => 'Baner zaktualizowany!';
+
+    @override
+    String get gameDialogsIconUpdated => 'Ikona zaktualizowana!';
 
     @override
     String get gameDialogsCancel => 'Anuluj';

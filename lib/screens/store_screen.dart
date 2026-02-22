@@ -63,7 +63,7 @@ class _StoreScreenState extends State<StoreScreen> {
     return Center(
       child: Text(
         l10n.loading,
-        style: const TextStyle(color: AppColors.textSecondary),
+        style: TextStyle(color: AppColors.textSecondary),
       ),
     );
   }

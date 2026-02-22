@@ -184,6 +184,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsIntegrations => 'Integrations';
+  @override
+  String get settingsAppearance => 'Appearance';
 
   @override
   String get settingsNotSet => 'Not set';
@@ -238,6 +240,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSteamGridDbHint => 'Paste your API key here';
+  @override
+  String get settingsLayout => 'Home Layout';
+
+  @override
+  String get settingsLayoutDesc => 'Choose how the launcher menu and library appear';
+
+  @override
+  String get settingsLayoutClassic => 'TV Mode';
+
+  @override
+  String get settingsLayoutHandheld => 'Pocket Home';
+
+  @override
+  String get settingsLayoutCompact => 'Compact Tiles';
+
+  @override
+  String get settingsColorPalette => 'Color Palette';
+
+  @override
+  String get settingsColorPaletteDesc => 'Change the app color theme';
+
+  @override
+  String get settingsColorPalettePlazaNet => 'PlazaNet (Vibrant Blue)';
+
+  @override
+  String get settingsColorPaletteNostalgiaWhite => 'Nostalgia White (Clean & Bright)';
 
   @override
   String get settingsStreaming => 'Streaming';
@@ -400,6 +428,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
     @override
     String get gameDetailsSetBanner => 'Set Banner';
+  @override
+  String get gameDetailsSetIcon => 'Set Icon';
 
     @override
     String get gameDetailsManagement => 'Management';
@@ -462,6 +492,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
     @override
     String get gameDialogsAvailableBanners => 'Available Banners';
+  @override
+  String get gameDialogsAvailableIcons => 'Available Icons';
+  @override
+  String get gameDialogsNoIcons => 'No icons available';
+
+  @override
+  String get gameDialogsSelectCover => 'Select Cover Art';
+
+  @override
+  String get gameDialogsSelectBanner => 'Select Banner';
+
+  @override
+  String get gameDialogsSelectIcon => 'Select Icon';
 
     @override
     String gameDialogsImagesCount(int count) => '$count images';
@@ -480,6 +523,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
     @override
     String get gameDialogsSetBanner => 'Set Banner';
+  @override
+  String get gameDialogsSetIcon => 'Set Icon';
+  @override
+  String get gameDialogsIconUpdated => 'Icon updated successfully';
 
     @override
     String get gameDialogsCoverUpdated => 'Cover updated!';

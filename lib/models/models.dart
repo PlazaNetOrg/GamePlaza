@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 class NavigationItem {
-  final IconData icon;
+  final IconData? icon;
+  final String? assetPath;
   final String label;
 
-  NavigationItem({required this.icon, required this.label});
+  const NavigationItem({this.icon, this.assetPath, required this.label})
+      : assert(icon != null || assetPath != null);
 }
 
 class ActionHint {

@@ -212,7 +212,7 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
               ),
               child: app.icon != null
                   ? Image.memory(app.icon!, width: 36, height: 36)
-                  : const Icon(Icons.apps, color: AppColors.textSecondary, size: 34),
+                  : Icon(Icons.apps, color: AppColors.textSecondary, size: 34),
             ),
             const SizedBox(height: 6),
             Text(
@@ -220,7 +220,7 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 11),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 11),
             ),
           ],
         ),
@@ -238,7 +238,7 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: AppColors.elevatedSurface.withOpacity(0.92),
-        border: const Border(
+        border: Border(
           top: BorderSide(color: AppColors.divider),
         ),
       ),
@@ -247,7 +247,7 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
           IconButton(
             tooltip: 'Apps',
             onPressed: () => setState(() => _menuOpen = !_menuOpen),
-            icon: const Icon(Icons.apps, color: AppColors.textPrimary),
+            icon: Icon(Icons.apps, color: AppColors.textPrimary),
           ),
           const SizedBox(width: 8),
           const Spacer(),
@@ -267,7 +267,7 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
         const SizedBox(width: 12),
         Text(
           _time,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -339,13 +339,13 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
         const SizedBox(width: 4),
         Text(
           '${(_batteryLevel * 100).round()}%',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(width: 6),
         IconButton(
           tooltip: 'Notifications',
           onPressed: _toggleNotificationsPanel,
-          icon: const Icon(
+          icon: Icon(
             Icons.notifications_none,
             color: AppColors.textSecondary,
             size: 20,
@@ -427,26 +427,26 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications, color: AppColors.textSecondary, size: 18),
+                    Icon(Icons.notifications, color: AppColors.textSecondary, size: 18),
                     const SizedBox(width: 8),
-                    const Text('Notifications', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                    Text('Notifications', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                     const Spacer(),
                     IconButton(
                       tooltip: 'Close',
                       onPressed: () => setState(() => _notificationsOpen = false),
-                      icon: const Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                      icon: Icon(Icons.close, color: AppColors.textSecondary, size: 18),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppColors.divider),
+              Divider(height: 1, color: AppColors.divider),
               Expanded(
                 child: !_hasNotificationAccess
                     ? _buildNotificationAccessPrompt()
                     : _notifications.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text('No notifications', style: TextStyle(color: AppColors.textSecondary)),
                           )
                         : ListView.separated(
@@ -469,9 +469,9 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.lock_outline, color: AppColors.textSecondary, size: 30),
+          Icon(Icons.lock_outline, color: AppColors.textSecondary, size: 30),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Enable notification access to read system notifications.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
@@ -482,7 +482,7 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
               await _notificationService.openNotificationAccessSettings();
               await _refreshNotifications();
             },
-            child: const Text('Open settings', style: TextStyle(color: AppColors.secondaryBlue)),
+            child: Text('Open settings', style: TextStyle(color: AppColors.secondaryBlue)),
           ),
         ],
       ),
@@ -504,26 +504,26 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.notifications, color: AppColors.textSecondary, size: 16),
+              Icon(Icons.notifications, color: AppColors.textSecondary, size: 16),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   item.appName,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 6),
-              Text(timeLabel, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+              Text(timeLabel, style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
             ],
           ),
           if (item.title.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text(item.title, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
+            Text(item.title, style: TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
           if (item.text.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(item.text, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            Text(item.text, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           ],
         ],
       ),
@@ -551,22 +551,22 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
                   onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
                   decoration: InputDecoration(
                     hintText: 'Search apps',
-                    hintStyle: const TextStyle(color: AppColors.textSecondary),
-                    prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
+                    prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
                     filled: true,
                     fillColor: AppColors.darkSurface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.divider),
+                      borderSide: BorderSide(color: AppColors.divider),
                     ),
                   ),
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                 ),
               ),
-              const Divider(height: 1, color: AppColors.divider),
+              Divider(height: 1, color: AppColors.divider),
               Expanded(
                 child: _filteredApps.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'No apps found',
                           style: TextStyle(color: AppColors.textSecondary),
@@ -603,14 +603,14 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
                                 children: [
                                   app.icon != null
                                       ? Image.memory(app.icon!, width: 40, height: 40)
-                                      : const Icon(Icons.apps, color: AppColors.textSecondary, size: 36),
+                                      : Icon(Icons.apps, color: AppColors.textSecondary, size: 36),
                                   const SizedBox(height: 8),
                                   Text(
                                     app.name,
                                     textAlign: TextAlign.center,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+                                    style: TextStyle(color: AppColors.textPrimary, fontSize: 12),
                                   ),
                                 ],
                               ),
@@ -645,9 +645,9 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
             children: [
               app.icon != null
                   ? Image.memory(app.icon!, width: 20, height: 20)
-                  : const Icon(Icons.apps, color: AppColors.textSecondary, size: 18),
+                  : Icon(Icons.apps, color: AppColors.textSecondary, size: 18),
               const SizedBox(width: 8),
-              const Text('App info', style: TextStyle(color: AppColors.textPrimary)),
+              Text('App info', style: TextStyle(color: AppColors.textPrimary)),
             ],
           ),
         ),
@@ -663,7 +663,7 @@ class _DesktopModeScreenState extends State<DesktopModeScreen> {
               const SizedBox(width: 8),
               Text(
                 isShortcut ? 'Remove from desktop' : 'Add to desktop',
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
               ),
             ],
           ),

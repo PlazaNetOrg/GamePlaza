@@ -42,16 +42,16 @@ class SidebarWidget extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(userName ?? 'Player', style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text(userName ?? 'Player', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text(currentTime, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      Text(currentTime, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(color: AppColors.divider, height: 1),
+          Divider(color: AppColors.divider, height: 1),
           Expanded(
             child: ListView.builder(
               itemCount: navItems.length,
@@ -66,7 +66,7 @@ class SidebarWidget extends StatelessWidget {
               },
             ),
           ),
-          const Divider(color: AppColors.divider, height: 1),
+          Divider(color: AppColors.divider, height: 1),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -121,11 +121,19 @@ class _NavItemButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
               children: [
-                Icon(
-                  item.icon,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                  size: 20,
-                ),
+                if (item.assetPath != null)
+                  Image.asset(
+                    item.assetPath!,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
+                  )
+                else
+                  Icon(
+                    item.icon,
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    size: 24,
+                  ),
                 const SizedBox(width: 12),
                 Text(
                   item.label,

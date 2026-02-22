@@ -15,6 +15,7 @@ import 'library_screen.dart';
 import 'plaza_net_screen.dart';
 import 'store_screen.dart';
 import 'settings_screen.dart';
+import '../models/layout_mode.dart';
 import '../services/game_library_service.dart';
 import '../services/game_art_service.dart';
 import '../services/installed_apps_service.dart';
@@ -27,6 +28,7 @@ import '_widgets/sidebar_widget.dart';
 import '_widgets/top_bar_widget.dart';
 import '_widgets/action_guide_widget.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/profile_avatar.dart';
 import 'desktop_mode_screen.dart';
 
 class LauncherHomePage extends StatefulWidget {
@@ -61,6 +63,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   String? _apiKey;
   bool _showGameStreaming = false;
   bool _showVideoStreaming = false;
+  LayoutMode _layoutMode = LayoutMode.classic;
   List<String> _gameStreamingApps = [];
   List<String> _videoStreamingApps = [];
   late TabController _tabController;
@@ -87,17 +90,35 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   
   // Streaming app covers cache
   final Map<String, String?> _streamingAppCoversCache = {};
+  final Map<String, String?> _streamingAppIconsCache = {};
   final Map<String, String> _streamingAppNamesCache = {};
 
   List<NavigationItem> _navItems(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return [
-      NavigationItem(icon: Icons.home, label: l10n.navHome),
-      NavigationItem(icon: Icons.library_books, label: l10n.navLibrary),
-      NavigationItem(icon: Icons.cloud, label: l10n.navPlazaNet),
-      NavigationItem(icon: Icons.store, label: l10n.navStore),
-      NavigationItem(icon: Icons.settings, label: l10n.navSettings),
+      NavigationItem(assetPath: 'assets/images/home.png', label: l10n.navHome),
+      NavigationItem(assetPath: 'assets/images/library.png', label: l10n.navLibrary),
+      NavigationItem(assetPath: 'assets/images/plazanet.png', label: l10n.navPlazaNet),
+      NavigationItem(assetPath: 'assets/images/store.png', label: l10n.navStore),
+      NavigationItem(assetPath: 'assets/images/settings.png', label: l10n.navSettings),
     ];
+  }
+
+  Widget _buildNavIcon(NavigationItem item, {required bool isSelected, double size = 24}) {
+    if (item.assetPath != null) {
+      return Image.asset(
+        item.assetPath!,
+        width: size + 4,
+        height: size + 4,
+        fit: BoxFit.contain,
+      );
+    }
+    final color = isSelected ? Colors.white : AppColors.textPrimary;
+    return Icon(
+      item.icon,
+      size: size + 4,
+      color: color,
+    );
   }
 
   @override
@@ -112,6 +133,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     _loadInstalledApps();
     _loadStreamingSettings();
     _loadStreamingApps();
+    _loadLayoutMode();
     _updateTime();
     _updateBattery();
     _initShortcutService();
@@ -258,6 +280,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       _videoStreamingApps = videoApps;
     });
     await _loadStreamingAppCovers();
+    await _loadStreamingAppIcons();
     await _loadStreamingAppNames();
   }
 
@@ -265,6 +288,16 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     await _loadLibrary();
     await _loadStreamingSettings();
     await _loadStreamingApps();
+    await _loadLayoutMode();
+  }
+
+  Future<void> _loadLayoutMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(layoutModePrefKey);
+    if (!mounted) return;
+    setState(() {
+      _layoutMode = layoutModeFromString(raw);
+    });
   }
 
   void _applyStreamingTabSettings(bool gameStreaming, bool videoStreaming) {
@@ -310,44 +343,83 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   Future<void> _setStreamingAppCover(AppInfo app, String? coverPath) async {
     if (_apiKey == null || _apiKey!.isEmpty) return;
     
+    final useIcon = _layoutMode == LayoutMode.handheld || _layoutMode == LayoutMode.compact;
+    
     showDialog(
       context: context,
-      builder: (context) => CoverPickerDialog(
-        apiKey: _apiKey!,
-        appName: app.name,
-        packageName: app.packageName,
-        onCoverSelected: (url) async {
-          try {
-            final savedPath = await _gameArtService.saveGameArt(
-              gameId: app.packageName,
-              imageUrl: url,
-              type: GameArtType.cover,
-            );
-            await _libraryService.setStreamingAppCoverPath(app.packageName, savedPath);
-            
-            if (mounted) {
-              setState(() {
-                _streamingAppCoversCache[app.packageName] = savedPath;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(AppLocalizations.of(context).gameDialogsCoverUpdated),
-                  backgroundColor: AppColors.primaryBlue,
-                ),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${AppLocalizations.of(context).msgArtworkError}: $e'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        },
-      ),
+      builder: (context) => useIcon
+          ? IconPickerDialog(
+              apiKey: _apiKey!,
+              appName: app.name,
+              packageName: app.packageName,
+              onIconSelected: (url) async {
+                try {
+                  final savedPath = await _gameArtService.saveGameArt(
+                    gameId: app.packageName,
+                    imageUrl: url,
+                    type: GameArtType.icon,
+                  );
+                  await _libraryService.setStreamingAppIconPath(app.packageName, savedPath);
+                  
+                  if (mounted) {
+                    setState(() {
+                      _streamingAppIconsCache[app.packageName] = savedPath;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context).gameDialogsIconUpdated),
+                        backgroundColor: AppColors.primaryBlue,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${AppLocalizations.of(context).msgArtworkError}: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            )
+          : CoverPickerDialog(
+              apiKey: _apiKey!,
+              appName: app.name,
+              packageName: app.packageName,
+              onCoverSelected: (url) async {
+                try {
+                  final savedPath = await _gameArtService.saveGameArt(
+                    gameId: app.packageName,
+                    imageUrl: url,
+                    type: GameArtType.cover,
+                  );
+                  await _libraryService.setStreamingAppCoverPath(app.packageName, savedPath);
+                  
+                  if (mounted) {
+                    setState(() {
+                      _streamingAppCoversCache[app.packageName] = savedPath;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context).gameDialogsCoverUpdated),
+                        backgroundColor: AppColors.primaryBlue,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${AppLocalizations.of(context).msgArtworkError}: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
     );
   }
 
@@ -456,7 +528,11 @@ class _LauncherHomePageState extends State<LauncherHomePage>
 
   Future<Game?> _updateGameArt(Game game, String imageUrl, GameArtType type) async {
     try {
-      final deletePath = type == GameArtType.cover ? game.localCoverPath : game.localBannerPath;
+      final deletePath = type == GameArtType.cover
+          ? game.localCoverPath
+          : type == GameArtType.banner
+              ? game.localBannerPath
+              : game.localIconPath;
       if (deletePath != null) await _gameArtService.deleteArt(deletePath);
 
       final savedPath = await _gameArtService.saveGameArt(
@@ -465,9 +541,11 @@ class _LauncherHomePageState extends State<LauncherHomePage>
         type: type,
       );
 
-      final updated = type == GameArtType.cover
+        final updated = type == GameArtType.cover
           ? game.copyWith(coverUrl: imageUrl, localCoverPath: savedPath)
-          : game.copyWith(bannerUrl: imageUrl, localBannerPath: savedPath);
+          : type == GameArtType.banner
+            ? game.copyWith(bannerUrl: imageUrl, localBannerPath: savedPath)
+            : game.copyWith(iconUrl: imageUrl, localIconPath: savedPath);
 
       await _libraryService.updateGame(updated);
       await _loadLibrary();
@@ -492,10 +570,37 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     return null;
   }
 
+  ImageProvider? _iconImage(Game game) {
+    if (game.localIconPath != null) {
+      final file = File(game.localIconPath!);
+      if (file.existsSync()) {
+        return FileImage(file);
+      }
+    }
+    if (game.packageName != null) {
+      final app = _installedApps.firstWhereOrNull((a) => a.packageName == game.packageName);
+      if (app?.icon != null) {
+        return MemoryImage(app!.icon!);
+      }
+    }
+    return null;
+  }
+
   ImageProvider? _streamingAppCoverImage(AppInfo app) {
     final coverPath = _streamingAppCoversCache[app.packageName];
     if (coverPath != null) {
       final file = File(coverPath);
+      if (file.existsSync()) {
+        return FileImage(file);
+      }
+    }
+    return null;
+  }
+
+  ImageProvider? _streamingAppIconImage(AppInfo app) {
+    final iconPath = _streamingAppIconsCache[app.packageName];
+    if (iconPath != null) {
+      final file = File(iconPath);
       if (file.existsSync()) {
         return FileImage(file);
       }
@@ -511,6 +616,13 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     for (final packageName in [..._gameStreamingApps, ..._videoStreamingApps]) {
       final coverPath = await _libraryService.getStreamingAppCoverPath(packageName);
       _streamingAppCoversCache[packageName] = coverPath;
+    }
+  }
+
+  Future<void> _loadStreamingAppIcons() async {
+    for (final packageName in [..._gameStreamingApps, ..._videoStreamingApps]) {
+      final iconPath = await _libraryService.getStreamingAppIconPath(packageName);
+      _streamingAppIconsCache[packageName] = iconPath;
     }
   }
 
@@ -545,19 +657,19 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.elevatedSurface,
-        title: Text(title, style: const TextStyle(color: AppColors.textPrimary)),
+        title: Text(title, style: TextStyle(color: AppColors.textPrimary)),
         content: TextField(
           controller: controller,
           autofocus: true,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: 'Type to filter...',
-            hintStyle: const TextStyle(color: AppColors.textSecondary),
+            hintStyle: TextStyle(color: AppColors.textSecondary),
             filled: true,
             fillColor: AppColors.darkSurface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.divider),
+              borderSide: BorderSide(color: AppColors.divider),
             ),
           ),
           onSubmitted: (value) => Navigator.pop(context, value),
@@ -620,6 +732,19 @@ class _LauncherHomePageState extends State<LauncherHomePage>
         appName: game.title,
         packageName: game.packageName ?? game.title,
         onCoverSelected: (url) => _updateGameArt(game, url, GameArtType.cover),
+      ),
+    );
+  }
+
+  void _setIconForGameDetail(Game game) {
+    if (_apiKey == null || _apiKey!.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (context) => IconPickerDialog(
+        apiKey: _apiKey!,
+        appName: game.title,
+        packageName: game.packageName ?? game.title,
+        onIconSelected: (url) => _updateGameArt(game, url, GameArtType.icon),
       ),
     );
   }
@@ -715,6 +840,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       onLaunch: _launchGame,
       onSetBanner: _setBannerForGameDetail,
       onSetCover: _setCoverForGameDetail,
+      onSetIcon: _setIconForGameDetail,
       libraryService: _libraryService,
       focusNode: _playButtonFocusNode,
     );
@@ -754,8 +880,11 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       onGamesSearchQueryChanged: (v) => setState(() => _searchQuery = v),
       onAppsSearchQueryChanged: (v) => setState(() => _appsSearchQuery = v),
       onGameCardPressed: _openGameDetail,
+      onGameLaunch: _launchGame,
       coverImageProvider: _coverImage,
+      iconImageProvider: _iconImage,
       streamingCoverImageProvider: _streamingAppCoverImage,
+      streamingIconImageProvider: _streamingAppIconImage,
       streamingDisplayNameProvider: _streamingAppDisplayName,
       appsService: _appsService,
       onAddAsGame: _addGameFromApp,
@@ -767,17 +896,24 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       tabController: _tabController,
       showGameStreaming: _showGameStreaming,
       showVideoStreaming: _showVideoStreaming,
+      layoutMode: _layoutMode,
     );
   }
 
   Widget _buildPlazaNetContent() {
     final items = _navItems(context);
-    return PlazaNetScreen(label: items[2].label, icon: items[2].icon);
+    return PlazaNetScreen(
+      label: items[2].label,
+      icon: items[2].icon ?? Icons.cloud,
+    );
   }
 
   Widget _buildStoreContent() {
     final items = _navItems(context);
-    return StoreScreen(label: items[3].label, icon: items[3].icon);
+    return StoreScreen(
+      label: items[3].label,
+      icon: items[3].icon ?? Icons.store,
+    );
   }
 
   Widget _buildSettingsContent() {
@@ -804,9 +940,10 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       body = _buildSettingsContent();
     }
 
+    final showTopBar = _layoutMode != LayoutMode.handheld;
     return Column(
       children: [
-        TopBarWidget(label: _navItems(context)[_selectedIndex].label),
+        if (showTopBar) TopBarWidget(label: _navItems(context)[_selectedIndex].label),
         Expanded(child: body),
         ActionGuideWidget(hints: _currentActionHints()),
       ],
@@ -814,6 +951,10 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   }
 
   Widget _buildNormalBody() {
+    if (_layoutMode == LayoutMode.handheld) {
+      return _buildHandheldBody();
+    }
+
     return Row(
       children: [
         SidebarWidget(
@@ -840,7 +981,193 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     );
   }
 
+  Widget _buildHandheldBody() {
+    final items = _navItems(context);
+    return Column(
+      children: [
+        const _HandheldBezelEdge(isTop: true),
+        Expanded(
+          child: FocusTraversalGroup(
+            policy: ReadingOrderTraversalPolicy(),
+            child: _selectedGame != null
+                ? _buildGameDetailView()
+                : _buildScreenContent(),
+          ),
+        ),
+        _HandheldNavBar(
+          items: items,
+          selectedIndex: _selectedIndex,
+          currentTime: _currentTime,
+          batteryLevel: _batteryLevel,
+          batteryState: _batteryState,
+          userName: _userName,
+          onSelected: (index) => setState(() {
+            _selectedIndex = index;
+            _selectedGame = null;
+          }),
+        ),
+        const _HandheldBezelEdge(isTop: false),
+      ],
+    );
+  }
+
   Widget _buildDesktopMode() {
     return const DesktopModeScreen();
+  }
+}
+
+class _HandheldNavBar extends StatelessWidget {
+  final List<NavigationItem> items;
+  final int selectedIndex;
+  final String? userName;
+  final String currentTime;
+  final int batteryLevel;
+  final BatteryState batteryState;
+  final ValueChanged<int> onSelected;
+
+  const _HandheldNavBar({
+    required this.items,
+    required this.selectedIndex,
+    required this.currentTime,
+    required this.batteryLevel,
+    required this.batteryState,
+    required this.userName,
+    required this.onSelected,
+  });
+
+  Widget _buildNavIcon(NavigationItem item, {required bool isSelected, double size = 24}) {
+    if (item.assetPath != null) {
+      return Image.asset(
+        item.assetPath!,
+        width: size + 4,
+        height: size + 4,
+        fit: BoxFit.contain,
+      );
+    }
+    final color = isSelected ? Colors.white : AppColors.textPrimary;
+    return Icon(
+      item.icon,
+      size: size + 4,
+      color: color,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkBattery = batteryState == BatteryState.discharging && batteryLevel < 15;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.darkSurface,
+        border: Border(
+          top: BorderSide(color: AppColors.divider),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Row(
+            children: [
+              ProfileAvatar(userName: userName, size: 36),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userName ?? 'Player',
+                    style: TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Expanded(
+            child: Center(
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                children: List.generate(items.length, (index) {
+                  final item = items[index];
+                  final isSelected = selectedIndex == index;
+                  return InkWell(
+                    onTap: () => onSelected(index),
+                    borderRadius: BorderRadius.circular(16),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primaryBlue : AppColors.elevatedSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primaryBlue : AppColors.divider,
+                        ),
+                      ),
+                      child: _buildNavIcon(item, isSelected: isSelected, size: 24),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                currentTime,
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              Row(
+                children: [
+                  Icon(
+                    batteryState == BatteryState.charging
+                        ? Icons.battery_charging_full
+                        : Icons.battery_std,
+                    color: isDarkBattery ? Colors.red : AppColors.textSecondary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$batteryLevel%',
+                    style: TextStyle(
+                      color: isDarkBattery ? Colors.red : AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HandheldBezelEdge extends StatelessWidget {
+  final bool isTop;
+
+  const _HandheldBezelEdge({required this.isTop});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 12,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: isTop ? Alignment.topCenter : Alignment.bottomCenter,
+          end: isTop ? Alignment.bottomCenter : Alignment.topCenter,
+          colors: [
+            AppColors.darkSurface,
+            AppColors.darkSurface.withValues(alpha: 0.0),
+          ],
+        ),
+      ),
+    );
   }
 }

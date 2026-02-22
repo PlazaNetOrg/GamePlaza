@@ -4,7 +4,7 @@ import '../theme/app_colors.dart';
 import '../services/steamgriddb_service.dart';
 import '../l10n/app_localizations.dart';
 
-enum ImageType { grid, hero }
+enum ImageType { grid, hero, icon }
 
 class CoverPickerDialog extends StatelessWidget {
   final String apiKey;
@@ -28,6 +28,32 @@ class CoverPickerDialog extends StatelessWidget {
       packageName: packageName,
       imageType: ImageType.grid,
       onBannerSelected: onCoverSelected,
+    );
+  }
+}
+
+class IconPickerDialog extends StatelessWidget {
+  final String apiKey;
+  final String appName;
+  final String packageName;
+  final Function(String) onIconSelected;
+
+  const IconPickerDialog({
+    super.key,
+    required this.apiKey,
+    required this.appName,
+    required this.packageName,
+    required this.onIconSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BannerPickerDialog(
+      apiKey: apiKey,
+      appName: appName,
+      packageName: packageName,
+      imageType: ImageType.icon,
+      onBannerSelected: onIconSelected,
     );
   }
 }
@@ -112,7 +138,9 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
       _selectedImageIndex = null;
     });
     final images = widget.imageType == ImageType.grid
-        ? await _steamGridService.getGridImages(gameId)
+      ? await _steamGridService.getGridImages(gameId)
+      : widget.imageType == ImageType.icon
+        ? await _steamGridService.getIconImages(gameId)
         : await _steamGridService.getHeroImages(gameId);
     setState(() {
       _bannerImages = images;
@@ -175,7 +203,11 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
     return Row(
       children: [
         Icon(
-          widget.imageType == ImageType.grid ? Icons.image : Icons.panorama,
+          widget.imageType == ImageType.grid
+              ? Icons.image
+              : widget.imageType == ImageType.icon
+                  ? Icons.apps
+                  : Icons.panorama,
           color: AppColors.primaryBlue,
           size: 28,
         ),
@@ -185,12 +217,16 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.imageType == ImageType.grid ? 'Select Cover Art' : 'Select Banner',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                widget.imageType == ImageType.grid
+                    ? AppLocalizations.of(context).gameDialogsSelectCover
+                    : widget.imageType == ImageType.icon
+                        ? AppLocalizations.of(context).gameDialogsSelectIcon
+                        : AppLocalizations.of(context).gameDialogsSelectBanner,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               Text(
                 widget.appName,
-                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -213,7 +249,7 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
         const SizedBox(height: 16),
         Text(
           AppLocalizations.of(context).gameDialogsMatchingGames,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 8),
         Expanded(
@@ -229,13 +265,13 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
     return TextField(
       controller: _searchController,
       focusNode: _searchFocusNode,
-      style: const TextStyle(color: AppColors.textPrimary),
+      style: TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: AppLocalizations.of(context).gameDialogsSearchHint,
-        hintStyle: const TextStyle(color: AppColors.textSecondary),
-        prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+        hintStyle: TextStyle(color: AppColors.textSecondary),
+        prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
         suffixIcon: _isSearching
-            ? const Padding(
+            ? Padding(
                 padding: EdgeInsets.all(12),
                 child: SizedBox(
                   width: 16,
@@ -252,15 +288,15 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.divider),
+          borderSide: BorderSide(color: AppColors.divider),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.divider),
+          borderSide: BorderSide(color: AppColors.divider),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryBlue, width: 2),
         ),
       ),
       onSubmitted: _searchGames,
@@ -269,7 +305,7 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
 
   Widget _buildGamesList() {
     if (_isSearching) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primaryBlue),
       );
     }
@@ -279,13 +315,13 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.search_off, size: 32, color: AppColors.textSecondary),
+            Icon(Icons.search_off, size: 32, color: AppColors.textSecondary),
             const SizedBox(height: 8),
             Text(
               _searchController.text.isEmpty
                   ? AppLocalizations.of(context).gameDialogsEnterSearchTerm
                   : AppLocalizations.of(context).gameDialogsNoGamesFound,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               textAlign: TextAlign.center,
             ),
           ],
@@ -323,14 +359,16 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
             Text(
               widget.imageType == ImageType.grid
                   ? AppLocalizations.of(context).gameDialogsAvailableCovers
-                  : AppLocalizations.of(context).gameDialogsAvailableBanners,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  : widget.imageType == ImageType.icon
+                      ? AppLocalizations.of(context).gameDialogsAvailableIcons
+                      : AppLocalizations.of(context).gameDialogsAvailableBanners,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
             ),
             const Spacer(),
             if (_bannerImages.isNotEmpty)
               Text(
                 AppLocalizations.of(context).gameDialogsImagesCount(_bannerImages.length),
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
           ],
         ),
@@ -354,7 +392,7 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
 
   Widget _buildImageGrid() {
     if (_isLoadingImages) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue));
+      return Center(child: CircularProgressIndicator(color: AppColors.primaryBlue));
     }
 
     if (_bannerImages.isEmpty) {
@@ -362,24 +400,34 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.image_not_supported, size: 48, color: AppColors.textSecondary),
+            Icon(Icons.image_not_supported, size: 48, color: AppColors.textSecondary),
             const SizedBox(height: 16),
             Text(
               _searchResults.isEmpty
                   ? AppLocalizations.of(context).gameDialogsSearchForArtwork
                   : widget.imageType == ImageType.grid
                       ? AppLocalizations.of(context).gameDialogsNoCovers
-                      : AppLocalizations.of(context).gameDialogsNoBanners,
+                      : widget.imageType == ImageType.icon
+                          ? AppLocalizations.of(context).gameDialogsNoIcons
+                          : AppLocalizations.of(context).gameDialogsNoBanners,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ],
         ),
       );
     }
 
-    final crossAxisCount = widget.imageType == ImageType.grid ? 2 : 1;
-    final childAspectRatio = widget.imageType == ImageType.grid ? 0.667 : 2.5;
+    final crossAxisCount = widget.imageType == ImageType.grid
+      ? 2
+      : widget.imageType == ImageType.icon
+        ? 4
+        : 1;
+    final childAspectRatio = widget.imageType == ImageType.grid
+      ? 0.667
+      : widget.imageType == ImageType.icon
+        ? 1.0
+        : 2.5;
 
     return GridView.builder(
       padding: const EdgeInsets.all(8),
@@ -409,7 +457,9 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
         _FocusableButton(
           label: widget.imageType == ImageType.grid
               ? AppLocalizations.of(context).gameDialogsSetCover
-              : AppLocalizations.of(context).gameDialogsSetBanner,
+              : widget.imageType == ImageType.icon
+                  ? AppLocalizations.of(context).gameDialogsSetIcon
+                  : AppLocalizations.of(context).gameDialogsSetBanner,
           isPrimary: true,
           enabled: _selectedBannerUrl != null,
           onPressed: _selectedBannerUrl != null
@@ -420,7 +470,9 @@ class _BannerPickerDialogState extends State<BannerPickerDialog> {
                     SnackBar(
                       content: Text(widget.imageType == ImageType.grid
                           ? AppLocalizations.of(context).gameDialogsCoverUpdated
-                          : AppLocalizations.of(context).gameDialogsBannerUpdated),
+                          : widget.imageType == ImageType.icon
+                              ? AppLocalizations.of(context).gameDialogsIconUpdated
+                              : AppLocalizations.of(context).gameDialogsBannerUpdated),
                       backgroundColor: AppColors.primaryBlue,
                     ),
                   );
@@ -523,7 +575,7 @@ class _FocusableListTile extends StatelessWidget {
                 child: Row(
                   children: [
                     if (isSelected)
-                      const Icon(Icons.check_circle, color: AppColors.primaryBlue, size: 16)
+                      Icon(Icons.check_circle, color: AppColors.primaryBlue, size: 16)
                     else
                       Icon(Icons.videogame_asset, color: focused ? AppColors.textPrimary : AppColors.textSecondary, size: 16),
                     const SizedBox(width: 8),
@@ -546,7 +598,7 @@ class _FocusableListTile extends StatelessWidget {
                           color: AppColors.primaryBlue.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Icon(Icons.keyboard_return, color: AppColors.primaryBlue, size: 12),
+                        child: Icon(Icons.keyboard_return, color: AppColors.primaryBlue, size: 12),
                       ),
                   ],
                 ),
@@ -617,7 +669,7 @@ class _FocusableImageTile extends StatelessWidget {
                           if (loadingProgress == null) return child;
                           return Container(
                             color: AppColors.darkSurface,
-                            child: const Center(
+                            child: Center(
                               child: CircularProgressIndicator(
                                 color: AppColors.primaryBlue,
                                 strokeWidth: 2,
@@ -628,7 +680,7 @@ class _FocusableImageTile extends StatelessWidget {
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             color: AppColors.darkSurface,
-                            child: const Center(
+                            child: Center(
                               child: Icon(Icons.broken_image, color: AppColors.textSecondary),
                             ),
                           );
@@ -640,7 +692,7 @@ class _FocusableImageTile extends StatelessWidget {
                           right: 8,
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.primaryBlue,
                               shape: BoxShape.circle,
                             ),

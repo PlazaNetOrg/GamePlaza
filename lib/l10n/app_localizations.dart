@@ -88,6 +88,7 @@ abstract class AppLocalizations {
   String get settingsAccount;
   String get settingsDisplayName;
   String get settingsIntegrations;
+  String get settingsAppearance;
   String get settingsNotSet;
   String get settingsPlazaNetTitle;
   String get settingsConnected;
@@ -106,6 +107,15 @@ abstract class AppLocalizations {
   String get settingsSteamGridDbTitle;
   String get settingsSteamGridDbDescription;
   String get settingsSteamGridDbHint;
+  String get settingsLayout;
+  String get settingsLayoutDesc;
+  String get settingsLayoutClassic;
+  String get settingsLayoutHandheld;
+  String get settingsLayoutCompact;
+  String get settingsColorPalette;
+  String get settingsColorPaletteDesc;
+  String get settingsColorPalettePlazaNet;
+  String get settingsColorPaletteNostalgiaWhite;
   String get settingsStreaming;
   String get settingsGameStreaming;
   String get settingsGameStreamingDesc;
@@ -168,6 +178,7 @@ abstract class AppLocalizations {
   String get gameDetailsArtwork;
   String get gameDetailsSetCover;
   String get gameDetailsSetBanner;
+  String get gameDetailsSetIcon;
   String get gameDetailsManagement;
   String get gameDetailsRemoveFromLibrary;
   String get gameDetailsUninstallApp;
@@ -190,14 +201,21 @@ abstract class AppLocalizations {
   String get gameDialogsNoGamesFound;
   String get gameDialogsAvailableCovers;
   String get gameDialogsAvailableBanners;
+  String get gameDialogsAvailableIcons;
   String gameDialogsImagesCount(int count);
   String get gameDialogsSearchForArtwork;
   String get gameDialogsNoCovers;
   String get gameDialogsNoBanners;
+  String get gameDialogsNoIcons;
+  String get gameDialogsSelectCover;
+  String get gameDialogsSelectBanner;
+  String get gameDialogsSelectIcon;
   String get gameDialogsSetCover;
   String get gameDialogsSetBanner;
+  String get gameDialogsSetIcon;
   String get gameDialogsCoverUpdated;
   String get gameDialogsBannerUpdated;
+  String get gameDialogsIconUpdated;
   String get gameDialogsCancel;
 
   // Streaming

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../theme/app_colors.dart';
 import '../../models/models.dart';
@@ -10,7 +12,10 @@ class GamesTab extends StatefulWidget {
   final String searchQuery;
   final VoidCallback onSearchPressed;
   final Function(Game) onGameCardPressed;
+  final Function(Game) onGameLaunch;
   final ImageProvider? Function(Game) coverImageProvider;
+  final ImageProvider? Function(Game) iconImageProvider;
+  final bool useIconLayout;
   final ValueChanged<String> onSearchQueryChanged;
 
   const GamesTab({
@@ -19,7 +24,10 @@ class GamesTab extends StatefulWidget {
     required this.searchQuery,
     required this.onSearchPressed,
     required this.onGameCardPressed,
+    required this.onGameLaunch,
     required this.coverImageProvider,
+    required this.iconImageProvider,
+    this.useIconLayout = false,
     required this.onSearchQueryChanged,
   });
 
@@ -28,13 +36,58 @@ class GamesTab extends StatefulWidget {
 }
 
 class _GamesTabState extends State<GamesTab> {
+  static const String _iconScalePrefKey = 'games_icon_scale';
+  double _iconScale = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadIconScale();
+  }
+
+  Future<void> _loadIconScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getDouble(_iconScalePrefKey);
+    if (!mounted) return;
+    if (value != null) {
+      setState(() => _iconScale = value.clamp(0.85, 1.3));
+    }
+  }
+
+  Future<void> _saveIconScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_iconScalePrefKey, _iconScale);
+  }
+
+  void _increaseIconScale() {
+    setState(() => _iconScale = (_iconScale + 0.15).clamp(0.85, 1.3));
+    _saveIconScale();
+  }
+
+  void _decreaseIconScale() {
+    setState(() => _iconScale = (_iconScale - 0.15).clamp(0.85, 1.3));
+    _saveIconScale();
+  }
+
+  int _iconRowsFromScale() {
+    if (_iconScale >= 1.2) return 1;
+    if (_iconScale <= 0.95) return 3;
+    return 2;
+  }
+
+  double _iconSpacingFromScale() {
+    if (_iconScale >= 1.2) return 22;
+    if (_iconScale <= 0.95) return 14;
+    return 18;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.games.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(
               Icons.games_outlined,
               size: 64,
@@ -81,9 +134,27 @@ class _GamesTabState extends State<GamesTab> {
                     ? AppLocalizations.of(context).librarySearchOnlyHint
                     : AppLocalizations.of(context)
                         .libraryFilterLabel(widget.searchQuery),
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const Spacer(),
+              if (widget.useIconLayout) ...[
+                IconButton(
+                  onPressed: _decreaseIconScale,
+                  icon: const Icon(Icons.remove),
+                  color: AppColors.textPrimary,
+                  tooltip: 'Smaller tiles',
+                  focusNode:
+                      FocusNode(skipTraversal: true, canRequestFocus: false),
+                ),
+                IconButton(
+                  onPressed: _increaseIconScale,
+                  icon: const Icon(Icons.add),
+                  color: AppColors.textPrimary,
+                  tooltip: 'Larger tiles',
+                  focusNode:
+                      FocusNode(skipTraversal: true, canRequestFocus: false),
+                ),
+              ],
               IconButton(
                 onPressed: widget.onSearchPressed,
                 icon: const Icon(Icons.search),
@@ -116,7 +187,7 @@ class _GamesTabState extends State<GamesTab> {
             const SizedBox(height: 16),
             Text(
               'No games matching "${widget.searchQuery}"',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 color: AppColors.textPrimary,
               ),
@@ -126,14 +197,29 @@ class _GamesTabState extends State<GamesTab> {
       );
     }
 
+    final iconRows = _iconRowsFromScale();
+    final iconSpacing = _iconSpacingFromScale();
+    final gridDelegate = widget.useIconLayout
+        ? SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: iconRows,
+            childAspectRatio: 0.95,
+            crossAxisSpacing: iconSpacing,
+            mainAxisSpacing: iconSpacing,
+          )
+        : const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 5,
+            childAspectRatio: 0.62,
+            crossAxisSpacing: 18,
+            mainAxisSpacing: 20,
+          );
+
     return GridView.builder(
-      padding: const EdgeInsets.all(24),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 5,
-        childAspectRatio: 0.56,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+      gridDelegate: gridDelegate,
+      scrollDirection: widget.useIconLayout ? Axis.horizontal : Axis.vertical,
+      physics: widget.useIconLayout
+          ? const BouncingScrollPhysics()
+          : const AlwaysScrollableScrollPhysics(),
       itemCount: filteredGames.length,
       itemBuilder: (context, index) {
         return FocusTraversalOrder(
@@ -145,79 +231,186 @@ class _GamesTabState extends State<GamesTab> {
   }
 
   Widget _buildGameCard(Game game, {bool isLarge = false}) {
-    return FocusableActionDetector(
-      actions: {
-        ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) {
-          widget.onGameCardPressed(game);
-          return null;
-        }),
+    return Shortcuts(
+      shortcuts: const {
+        SingleActivator(LogicalKeyboardKey.gameButtonStart): _OpenGameDetailsIntent(),
       },
-      child: Focus(
-        child: Builder(
-          builder: (context) {
-            final focused = Focus.of(context).hasFocus;
-            final coverImage = widget.coverImageProvider(game);
-            return GestureDetector(
-              onTap: () => widget.onGameCardPressed(game),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 80),
+      child: Actions(
+        actions: {
+          _OpenGameDetailsIntent: CallbackAction<_OpenGameDetailsIntent>(onInvoke: (_) {
+            widget.onGameCardPressed(game);
+            return null;
+          }),
+        },
+        child: FocusableActionDetector(
+          actions: {
+            ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) {
+              widget.onGameLaunch(game);
+              return null;
+            }),
+          },
+          onFocusChange: (hasFocus) {
+            if (hasFocus) {
+              Scrollable.ensureVisible(
+                context,
+                alignment: 0.35,
+                duration: const Duration(milliseconds: 120),
+                curve: Curves.easeOut,
+              );
+            }
+          },
+          child: Builder(
+            builder: (context) {
+              final focused = Focus.of(context).hasFocus;
+              final coverImage = widget.coverImageProvider(game);
+              final iconImage = widget.iconImageProvider(game);
+              final imageProvider = widget.useIconLayout
+                  ? (iconImage ?? coverImage)
+                  : coverImage;
+              return GestureDetector(
+                onTap: () => widget.onGameLaunch(game),
+                onLongPress: () => widget.onGameCardPressed(game),
+                child: AnimatedContainer(
+                duration: const Duration(milliseconds: 110),
+                curve: Curves.easeOut,
                 width: isLarge ? 200 : null,
                 margin: isLarge ? const EdgeInsets.only(right: 16) : null,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(widget.useIconLayout ? 24 : 22),
+                  color: widget.useIconLayout
+                      ? AppColors.elevatedSurface.withValues(alpha: 0.94)
+                      : AppColors.elevatedSurface.withValues(alpha: 0.15),
+                  gradient: focused && !widget.useIconLayout
+                      ? LinearGradient(
+                          colors: [
+                            AppColors.primaryBlue.withValues(alpha: 0.7),
+                            AppColors.secondaryBlue.withValues(alpha: 0.85),
+                            AppColors.primaryBlue.withValues(alpha: 0.7),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
                   border: Border.all(
-                    color: focused ? AppColors.primaryBlue : Colors.transparent,
-                    width: 4,
+                    color: widget.useIconLayout
+                        ? (focused
+                            ? AppColors.secondaryBlue.withValues(alpha: 0.9)
+                            : AppColors.divider)
+                        : (focused
+                            ? AppColors.secondaryBlue.withValues(alpha: 0.7)
+                            : AppColors.divider.withValues(alpha: 0.35)),
+                    width: widget.useIconLayout ? (focused ? 2.6 : 1.2) : (focused ? 2.6 : 1),
                   ),
+                  boxShadow: focused
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primaryBlue.withValues(alpha: 0.55),
+                            blurRadius: 22,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            blurRadius: 12,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: AppColors.elevatedSurface,
-                          image: coverImage != null
-                              ? DecorationImage(
-                                  image: coverImage,
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          children: [],
+                        child: widget.useIconLayout
+                          ? _buildIconTileContent(imageProvider, focused)
+                          : _buildCoverTileContent(imageProvider, focused),
+                    ),
+                    if (!widget.useIconLayout)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
+                        child: Text(
+                          game.title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        game.title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                   ],
                 ),
-              ),
-            );
-          },
+                  ),
+              );
+            },
+          ),
         ),
       ),
     );
   }
+
+  Widget _buildIconTileContent(ImageProvider? imageProvider, bool focused) {
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.darkSurface.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Center(
+          child: FractionallySizedBox(
+            widthFactor: 0.8,
+            heightFactor: 0.8,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                color: AppColors.elevatedSurface.withValues(alpha: 0.75),
+                child: imageProvider != null
+                    ? Image(image: imageProvider, fit: BoxFit.contain)
+                    : Icon(
+                        Icons.videogame_asset_outlined,
+                        color: AppColors.textSecondary,
+                        size: 36,
+                      ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCoverTileContent(ImageProvider? imageProvider, bool focused) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.elevatedSurface,
+            image: imageProvider != null
+                ? DecorationImage(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                  )
+                : null,
+          ),
+          child: imageProvider == null
+              ? Center(
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: AppColors.textSecondary,
+                    size: 28,
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
+class _OpenGameDetailsIntent extends Intent {
+  const _OpenGameDetailsIntent();
 }

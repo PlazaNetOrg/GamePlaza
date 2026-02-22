@@ -186,6 +186,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsIntegrations => '連携';
 
   @override
+  String get settingsAppearance => '外観';
+
+  @override
   String get settingsNotSet => '未設定';
 
   @override
@@ -238,6 +241,33 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsSteamGridDbHint => 'APIキーを貼り付け';
+
+  @override
+  String get settingsLayout => 'ホームレイアウト';
+
+  @override
+  String get settingsLayoutDesc => 'ランチャーメニューとライブラリの表示を選択';
+
+  @override
+  String get settingsLayoutClassic => 'TVモード';
+
+  @override
+  String get settingsLayoutHandheld => 'ポケットホーム';
+
+  @override
+  String get settingsLayoutCompact => 'コンパクトタイル';
+
+  @override
+  String get settingsColorPalette => 'カラーパレット';
+
+  @override
+  String get settingsColorPaletteDesc => 'アプリのカラーテーマを変更';
+
+  @override
+  String get settingsColorPalettePlazaNet => 'PlazaNet（鮮やかなブルー）';
+
+  @override
+  String get settingsColorPaletteNostalgiaWhite => 'ノスタルジアホワイト（明るくクリーン）';
 
   @override
   String get settingsStreaming => 'ストリーミング';
@@ -402,6 +432,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get gameDetailsSetBanner => 'バナーを設定';
 
   @override
+  String get gameDetailsSetIcon => 'アイコンを設定';
+
+  @override
   String get gameDetailsManagement => '管理';
 
   @override
@@ -462,6 +495,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get gameDialogsAvailableBanners => '利用可能なバナー';
 
   @override
+  String get gameDialogsAvailableIcons => '利用可能なアイコン';
+
+  @override
   String gameDialogsImagesCount(int count) => '$count 件の画像';
 
   @override
@@ -474,16 +510,34 @@ class AppLocalizationsJa extends AppLocalizations {
   String get gameDialogsNoBanners => 'このゲームのバナーが\nありません';
 
   @override
+  String get gameDialogsNoIcons => 'このゲームのアイコンが\nありません';
+
+  @override
+  String get gameDialogsSelectCover => 'カバーを選択';
+
+  @override
+  String get gameDialogsSelectBanner => 'バナーを選択';
+
+  @override
+  String get gameDialogsSelectIcon => 'アイコンを選択';
+
+  @override
   String get gameDialogsSetCover => 'カバーを設定';
 
   @override
   String get gameDialogsSetBanner => 'バナーを設定';
 
   @override
+  String get gameDialogsSetIcon => 'アイコンを設定';
+
+  @override
   String get gameDialogsCoverUpdated => 'カバーを更新しました！';
 
   @override
   String get gameDialogsBannerUpdated => 'バナーを更新しました！';
+
+  @override
+  String get gameDialogsIconUpdated => 'アイコンを更新しました！';
 
   @override
   String get gameDialogsCancel => 'キャンセル';

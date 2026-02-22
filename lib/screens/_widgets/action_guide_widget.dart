@@ -47,7 +47,7 @@ class _ActionHintItem extends StatelessWidget {
           child: Center(
             child: Text(
               hint.button,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.primaryBlue,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -58,7 +58,7 @@ class _ActionHintItem extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           hint.label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12,
           ),

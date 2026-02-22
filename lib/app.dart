@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'theme/app_colors.dart';
+import 'models/color_palette.dart';
 import 'services/game_library_service.dart';
 import 'screens/setup_screen.dart';
 import 'screens/launcher_home_page.dart';
@@ -26,6 +27,7 @@ class _GamePlazaState extends State<GamePlaza> {
   void initState() {
     super.initState();
     _loadLocale();
+    _loadPalette();
   }
 
   Future<void> _loadLocale() async {
@@ -38,9 +40,20 @@ class _GamePlazaState extends State<GamePlaza> {
     }
   }
 
+  Future<void> _loadPalette() async {
+    final palette = await ColorPaletteExtension.load();
+    AppColors.setPalette(palette);
+  }
+
   void updateLocale(Locale locale) {
     setState(() {
       _locale = locale;
+    });
+  }
+
+  void updatePalette(ColorPalette palette) {
+    setState(() {
+      AppColors.setPalette(palette);
     });
   }
 
@@ -61,7 +74,7 @@ class _GamePlazaState extends State<GamePlaza> {
         useMaterial3: true,
         brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.darkSurface,
-        colorScheme: const ColorScheme.dark(
+        colorScheme: ColorScheme.dark(
           primary: AppColors.primaryBlue,
           secondary: AppColors.secondaryBlue,
           surface: AppColors.darkSurface,
@@ -73,7 +86,7 @@ class _GamePlazaState extends State<GamePlaza> {
             borderRadius: BorderRadius.circular(20),
           ),
         ),
-        textTheme: const TextTheme(
+        textTheme: TextTheme(
           bodyLarge: TextStyle(color: AppColors.textPrimary),
           bodyMedium: TextStyle(color: AppColors.textPrimary),
           bodySmall: TextStyle(color: AppColors.textSecondary),
@@ -96,7 +109,7 @@ class _GamePlazaState extends State<GamePlaza> {
             ),
           ),
         ),
-        iconTheme: const IconThemeData(
+        iconTheme: IconThemeData(
           color: AppColors.textPrimary,
         ),
       ),
@@ -135,7 +148,7 @@ class _AppInitializerState extends State<AppInitializer> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: CircularProgressIndicator(
             color: AppColors.primaryBlue,

@@ -38,7 +38,7 @@ class _AllAppsTabState extends State<AllAppsTab> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
           color: AppColors.primaryBlue,
         ),
@@ -49,7 +49,7 @@ class _AllAppsTabState extends State<AllAppsTab> {
       return Center(
         child: Text(
           AppLocalizations.of(context).libraryNoApps,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             color: AppColors.textSecondary,
           ),
@@ -75,7 +75,7 @@ class _AllAppsTabState extends State<AllAppsTab> {
                     ? AppLocalizations.of(context).libraryReloadSearchHint
                     : AppLocalizations.of(context)
                         .libraryFilterLabel(widget.searchQuery),
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const Spacer(),
               IconButton(
@@ -143,76 +143,84 @@ class _AllAppsTabState extends State<AllAppsTab> {
               return null;
             }),
           },
-          child: Focus(
-            child: Builder(
-              builder: (context) {
-                final focused = Focus.of(context).hasFocus;
-                return GestureDetector(
-                  onTap: () async {
-                    await widget.appsService.launchApp(app.packageName);
-                  },
-                  onLongPress: () {
-                    _showAppContextMenu(app);
-                  },
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: focused
-                                ? AppColors.primaryBlue.withOpacity(0.1)
-                                : AppColors.elevatedSurface,
-                            border: Border.all(
-                              color: focused
-                                  ? AppColors.primaryBlue
-                                  : Colors.transparent,
-                              width: 4,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: app.icon != null
-                                ? Image.memory(
-                                    app.icon!,
-                                    fit: BoxFit.cover,
-                                  )
-                                : const Icon(
-                                    Icons.android,
-                                    size: 48,
-                                    color: AppColors.textSecondary,
-                                  ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        app.name,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight:
-                              focused ? FontWeight.bold : FontWeight.w500,
+          onFocusChange: (hasFocus) {
+            if (hasFocus) {
+              Scrollable.ensureVisible(
+                context,
+                alignment: 0.35,
+                duration: const Duration(milliseconds: 120),
+                curve: Curves.easeOut,
+              );
+            }
+          },
+          child: Builder(
+            builder: (context) {
+              final focused = Focus.of(context).hasFocus;
+              return GestureDetector(
+                onTap: () async {
+                  await widget.appsService.launchApp(app.packageName);
+                },
+                onLongPress: () {
+                  _showAppContextMenu(app);
+                },
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
                           color: focused
-                              ? AppColors.primaryBlue
-                              : AppColors.textPrimary,
+                              ? AppColors.primaryBlue.withOpacity(0.1)
+                              : AppColors.elevatedSurface,
+                          border: Border.all(
+                            color: focused
+                                ? AppColors.primaryBlue
+                                : Colors.transparent,
+                            width: 4,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: app.icon != null
+                              ? Image.memory(
+                                  app.icon!,
+                                  fit: BoxFit.cover,
+                                )
+                              : Icon(
+                                  Icons.android,
+                                  size: 48,
+                                  color: AppColors.textSecondary,
+                                ),
+                        ),
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      app.name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            focused ? FontWeight.bold : FontWeight.w500,
+                        color: focused
+                            ? AppColors.primaryBlue
+                            : AppColors.textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -254,7 +262,7 @@ class _AllAppsTabState extends State<AllAppsTab> {
                       children: [
                         Text(
                           app.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
@@ -262,7 +270,7 @@ class _AllAppsTabState extends State<AllAppsTab> {
                         ),
                         Text(
                           app.packageName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
@@ -273,7 +281,7 @@ class _AllAppsTabState extends State<AllAppsTab> {
                 ],
               ),
               const SizedBox(height: 24),
-              const Divider(color: AppColors.divider),
+              Divider(color: AppColors.divider),
               const SizedBox(height: 8),
               _buildContextMenuItem(
                 icon: Icons.info_outline,
@@ -357,19 +365,19 @@ class _AllAppsTabState extends State<AllAppsTab> {
         return AlertDialog(
           backgroundColor: AppColors.elevatedSurface,
           title: Text(AppLocalizations.of(context).libraryAddAsGame,
-              style: const TextStyle(color: AppColors.textPrimary)),
+              style: TextStyle(color: AppColors.textPrimary)),
           content: TextField(
             controller: titleController,
             autofocus: true,
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: AppLocalizations.of(context).libraryGameTitleHint,
-              hintStyle: const TextStyle(color: AppColors.textSecondary),
+              hintStyle: TextStyle(color: AppColors.textSecondary),
               filled: true,
               fillColor: AppColors.darkSurface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.divider),
+                borderSide: BorderSide(color: AppColors.divider),
               ),
             ),
           ),
@@ -406,7 +414,7 @@ class _AllAppsTabState extends State<AllAppsTab> {
             backgroundColor: AppColors.elevatedSurface,
             title: Text(
               AppLocalizations.of(context).libraryAddAsStreaming,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -415,15 +423,15 @@ class _AllAppsTabState extends State<AllAppsTab> {
                 TextField(
                   controller: titleController,
                   autofocus: true,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(context).libraryGameTitleHint,
-                    hintStyle: const TextStyle(color: AppColors.textSecondary),
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
                     filled: true,
                     fillColor: AppColors.darkSurface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.divider),
+                      borderSide: BorderSide(color: AppColors.divider),
                     ),
                   ),
                 ),
@@ -474,11 +482,11 @@ class _AllAppsTabState extends State<AllAppsTab> {
         backgroundColor: AppColors.elevatedSurface,
         title: Text(
           AppLocalizations.of(context).libraryUninstallApp,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
           AppLocalizations.of(context).libraryUninstallConfirm(app.name),
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
         actions: [
           TextButton(

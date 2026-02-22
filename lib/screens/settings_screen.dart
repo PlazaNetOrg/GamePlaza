@@ -5,9 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
 import '../app.dart';
 import '../theme/app_colors.dart';
+import '../models/color_palette.dart';
 import '../services/game_library_service.dart';
 import '../services/installed_apps_service.dart';
 import '../services/presence_service.dart';
+import '../models/layout_mode.dart';
 
 class SettingsScreen extends StatefulWidget {
   final GameLibraryService libraryService;
@@ -63,6 +65,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: AppLocalizations.of(context).settingsIntegrations,
             children: [
               _SteamGridDBKeyInput(onSettingsChanged: widget.onSettingsChanged),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _SettingsSection(
+            title: AppLocalizations.of(context).settingsAppearance,
+            children: [
+              _LayoutPicker(onSettingsChanged: widget.onSettingsChanged),
+              const SizedBox(height: 16),
+              _ColorPalettePicker(onSettingsChanged: widget.onSettingsChanged),
             ],
           ),
           const SizedBox(height: 24),
@@ -133,6 +144,199 @@ class _SettingsButton extends StatelessWidget {
   }
 }
 
+class _LayoutPicker extends StatefulWidget {
+  final Future<void> Function()? onSettingsChanged;
+
+  const _LayoutPicker({
+    this.onSettingsChanged,
+  });
+
+  @override
+  State<_LayoutPicker> createState() => _LayoutPickerState();
+}
+
+class _LayoutPickerState extends State<_LayoutPicker> {
+  LayoutMode _layoutMode = LayoutMode.classic;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLayoutMode();
+  }
+
+  Future<void> _loadLayoutMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(layoutModePrefKey);
+    if (!mounted) return;
+    setState(() {
+      _layoutMode = layoutModeFromString(raw);
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _setLayoutMode(LayoutMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(layoutModePrefKey, layoutModeToString(mode));
+    if (!mounted) return;
+    setState(() => _layoutMode = mode);
+    await widget.onSettingsChanged?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.settingsLayout,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.settingsLayoutDesc,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        if (_isLoading)
+          LinearProgressIndicator(color: AppColors.primaryBlue)
+        else
+          DropdownButtonFormField<LayoutMode>(
+            value: _layoutMode,
+            dropdownColor: AppColors.elevatedSurface,
+            iconEnabledColor: AppColors.textSecondary,
+            style: TextStyle(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.elevatedSurface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            items: [
+              DropdownMenuItem(
+                value: LayoutMode.classic,
+                child: Text(l10n.settingsLayoutClassic),
+              ),
+              DropdownMenuItem(
+                value: LayoutMode.handheld,
+                child: Text(l10n.settingsLayoutHandheld),
+              ),
+              DropdownMenuItem(
+                value: LayoutMode.compact,
+                child: Text(l10n.settingsLayoutCompact),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                _setLayoutMode(value);
+              }
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _ColorPalettePicker extends StatefulWidget {
+  final Future<void> Function()? onSettingsChanged;
+
+  const _ColorPalettePicker({this.onSettingsChanged});
+
+  @override
+  State<_ColorPalettePicker> createState() => _ColorPalettePickerState();
+}
+
+class _ColorPalettePickerState extends State<_ColorPalettePicker> {
+  ColorPalette _palette = ColorPalette.plazanet;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPalette();
+  }
+
+  Future<void> _loadPalette() async {
+    final palette = await ColorPaletteExtension.load();
+    if (!mounted) return;
+    setState(() {
+      _palette = palette;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _setPalette(ColorPalette palette) async {
+    await palette.save();
+    if (!mounted) return;
+    setState(() => _palette = palette);
+    GamePlaza.of(context)?.updatePalette(palette);
+    await widget.onSettingsChanged?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.settingsColorPalette,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.settingsColorPaletteDesc,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        if (_isLoading)
+          LinearProgressIndicator(color: AppColors.primaryBlue)
+        else
+          DropdownButtonFormField<ColorPalette>(
+            value: _palette,
+            dropdownColor: AppColors.elevatedSurface,
+            iconEnabledColor: AppColors.textSecondary,
+            style: TextStyle(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.elevatedSurface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            items: [
+              DropdownMenuItem(
+                value: ColorPalette.plazanet,
+                child: Text(l10n.settingsColorPalettePlazaNet),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.nostalgiaWhite,
+                child: Text(l10n.settingsColorPaletteNostalgiaWhite),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                _setPalette(value);
+              }
+            },
+          ),
+      ],
+    );
+  }
+}
+
 class _SettingsSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -149,7 +353,7 @@ class _SettingsSection extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -184,10 +388,10 @@ class _AccountInfoTile extends StatelessWidget {
     return FutureBuilder<String?>(
       future: future,
       builder: (context, snapshot) => ListTile(
-        title: Text(title, style: const TextStyle(color: AppColors.textPrimary)),
+        title: Text(title, style: TextStyle(color: AppColors.textPrimary)),
         subtitle: Text(
           snapshot.data ?? AppLocalizations.of(context).settingsNotSet,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         contentPadding: EdgeInsets.zero,
       ),
@@ -208,12 +412,12 @@ class _PlazaNetStatusTile extends StatelessWidget {
         future: libraryService.getPlazaNetUsername(),
         builder: (context, usernameSnapshot) => ListTile(
           title: Text(AppLocalizations.of(context).settingsPlazaNetTitle,
-              style: const TextStyle(color: AppColors.textPrimary)),
+              style: TextStyle(color: AppColors.textPrimary)),
           subtitle: Text(
             snapshot.data ?? false
                 ? usernameSnapshot.data ?? AppLocalizations.of(context).settingsConnected
                 : AppLocalizations.of(context).settingsNotConnected,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           contentPadding: EdgeInsets.zero,
         ),
@@ -238,7 +442,7 @@ class _ResetSetupOption extends StatelessWidget {
       children: [
         Text(
           AppLocalizations.of(context).settingsResetTitle,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -247,7 +451,7 @@ class _ResetSetupOption extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           AppLocalizations.of(context).settingsResetDescription,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 12),
         ElevatedButton.icon(
@@ -268,10 +472,10 @@ class _ResetSetupOption extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.elevatedSurface,
-        title: Text(AppLocalizations.of(context).settingsResetSetupDialog, style: const TextStyle(color: AppColors.textPrimary)),
+        title: Text(AppLocalizations.of(context).settingsResetSetupDialog, style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
           AppLocalizations.of(context).settingsResetSetupMessage,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(ctx).actionCancel)),
@@ -307,7 +511,7 @@ class _PresenceToggle extends StatelessWidget {
         if (!(snapshot.data ?? false)) {
           return Text(
             AppLocalizations.of(context).settingsPresenceLoginRequired,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           );
         }
         return _PresenceToggleSwitch(presenceService: presenceService);
@@ -350,10 +554,10 @@ class _PresenceToggleSwitchState extends State<_PresenceToggleSwitch> {
               children: [
                 SwitchListTile(
                   title: Text(AppLocalizations.of(context).settingsPresenceOverall,
-                      style: const TextStyle(color: AppColors.textPrimary)),
+                      style: TextStyle(color: AppColors.textPrimary)),
                   subtitle: Text(
                     AppLocalizations.of(context).settingsPresenceOverallDesc,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                   ),
                   value: overallEnabled,
                   activeThumbColor: AppColors.primaryBlue,
@@ -376,10 +580,10 @@ class _PresenceToggleSwitchState extends State<_PresenceToggleSwitch> {
                 const SizedBox(height: 12),
                 SwitchListTile(
                   title: Text(AppLocalizations.of(context).settingsPresenceGame,
-                      style: const TextStyle(color: AppColors.textPrimary)),
+                      style: TextStyle(color: AppColors.textPrimary)),
                   subtitle: Text(
                     AppLocalizations.of(context).settingsPresenceGameDesc,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                   ),
                   value: overallEnabled && gameEnabled,
                   activeThumbColor: AppColors.primaryBlue,
@@ -423,7 +627,7 @@ class _ClearDataOption extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           AppLocalizations.of(context).settingsClearDataMessage,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
@@ -448,7 +652,7 @@ class _ClearDataOption extends StatelessWidget {
         title: Text(AppLocalizations.of(context).settingsClearDataDialog, style: const TextStyle(color: Colors.red)),
         content: Text(
           AppLocalizations.of(context).settingsClearDataMessage,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(ctx).actionCancel)),
@@ -511,7 +715,7 @@ class _LanguagePickerState extends State<_LanguagePicker> {
               isExpanded: true,
               underline: const SizedBox(),
               dropdownColor: AppColors.elevatedSurface,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
               items: [
                 DropdownMenuItem(
                   value: 'en',
@@ -581,14 +785,101 @@ class _SteamGridDBKeyInputState extends State<_SteamGridDBKeyInput> {
     super.dispose();
   }
 
+  Future<void> _showApiKeyDialog() async {
+    await _loadApiKey();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.elevatedSurface,
+          title: Text(
+            AppLocalizations.of(context).settingsSteamGridDbTitle,
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).settingsSteamGridDbDescription,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _controller,
+                    style: TextStyle(color: AppColors.textPrimary),
+                    obscureText: _isObscured,
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context).settingsSteamGridDbHint,
+                      hintStyle: TextStyle(color: AppColors.textSecondary),
+                      filled: true,
+                      fillColor: AppColors.darkSurface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isObscured ? Icons.visibility : Icons.visibility_off,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () => setState(() => _isObscured = !_isObscured),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () async {
+                _controller.text = '';
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('steamgriddb_api_key', '');
+                if (!mounted) return;
+                Navigator.pop(context);
+                await widget.onSettingsChanged?.call();
+                setState(() {});
+              },
+              child: Text('Clear', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('steamgriddb_api_key', _controller.text.trim());
+                if (!mounted) return;
+                Navigator.pop(context);
+                await widget.onSettingsChanged?.call();
+                setState(() {});
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+              ),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasKey = _controller.text.trim().isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           AppLocalizations.of(context).settingsSteamGridDbTitle,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -597,38 +888,23 @@ class _SteamGridDBKeyInputState extends State<_SteamGridDBKeyInput> {
         const SizedBox(height: 8),
         Text(
           AppLocalizations.of(context).settingsSteamGridDbDescription,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 12),
-        TextField(
-          controller: _controller,
-          style: const TextStyle(color: AppColors.textPrimary),
-          obscureText: _isObscured,
-          decoration: InputDecoration(
-            hintText: AppLocalizations.of(context).settingsSteamGridDbHint,
-            hintStyle: const TextStyle(color: AppColors.textSecondary),
-            filled: true,
-            fillColor: AppColors.elevatedSurface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isObscured ? Icons.visibility : Icons.visibility_off,
-                color: AppColors.textSecondary,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                hasKey ? AppLocalizations.of(context).settingsConnected : AppLocalizations.of(context).settingsNotSet,
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
-              onPressed: () {
-                setState(() {
-                  _isObscured = !_isObscured;
-                });
-              },
             ),
-          ),
-          onChanged: (value) async {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('steamgriddb_api_key', value);
-          },
+            TextButton.icon(
+              onPressed: _showApiKeyDialog,
+              icon: Icon(Icons.vpn_key, color: AppColors.primaryBlue, size: 18),
+              label: Text('Set key', style: TextStyle(color: AppColors.primaryBlue)),
+            ),
+          ],
         ),
       ],
     );
@@ -673,11 +949,11 @@ class _StreamingToggleState extends State<_StreamingToggle> {
                 SwitchListTile(
                   title: Text(
                     AppLocalizations.of(context).settingsGameStreaming,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                   ),
                   subtitle: Text(
                     AppLocalizations.of(context).settingsGameStreamingDesc,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                   ),
                   value: gameEnabled,
                   activeThumbColor: AppColors.primaryBlue,
@@ -696,11 +972,11 @@ class _StreamingToggleState extends State<_StreamingToggle> {
                 SwitchListTile(
                   title: Text(
                     AppLocalizations.of(context).settingsVideoStreaming,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                   ),
                   subtitle: Text(
                     AppLocalizations.of(context).settingsVideoStreamingDesc,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                   ),
                   value: videoEnabled,
                   activeThumbColor: AppColors.primaryBlue,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 import '../../theme/app_colors.dart';
@@ -22,7 +23,9 @@ class StreamingTab extends StatefulWidget {
   final List<String> videoStreamingApps;
   final Function(AppInfo app, String? coverPath)? onSetStreamingCover;
   final ImageProvider? Function(AppInfo) coverImageProvider;
+  final ImageProvider? Function(AppInfo) iconImageProvider;
   final String Function(AppInfo) displayNameProvider;
+  final bool useIconLayout;
 
   const StreamingTab({
     super.key,
@@ -38,7 +41,9 @@ class StreamingTab extends StatefulWidget {
     this.onRemoveStreaming,
     this.onSetStreamingCover,
     required this.coverImageProvider,
+    required this.iconImageProvider,
     required this.displayNameProvider,
+    this.useIconLayout = false,
     this.gameStreamingApps = const [],
     this.videoStreamingApps = const [],
   });
@@ -50,11 +55,50 @@ class StreamingTab extends StatefulWidget {
 class _StreamingTabState extends State<StreamingTab> {
   late List<AppInfo> _gameStreamingInstalledApps;
   late List<AppInfo> _videoStreamingInstalledApps;
+  static const String _iconScalePrefKey = 'streaming_icon_scale';
+  double _iconScale = 1.0;
+
+  void _increaseIconScale() {
+    setState(() => _iconScale = (_iconScale + 0.15).clamp(0.85, 1.3));
+    _saveIconScale();
+  }
+
+  void _decreaseIconScale() {
+    setState(() => _iconScale = (_iconScale - 0.15).clamp(0.85, 1.3));
+    _saveIconScale();
+  }
+
+  int _iconRowsFromScale() {
+    if (_iconScale >= 1.2) return 1;
+    if (_iconScale <= 0.95) return 3;
+    return 2;
+  }
+
+  double _iconSpacingFromScale() {
+    if (_iconScale >= 1.2) return 22;
+    if (_iconScale <= 0.95) return 14;
+    return 18;
+  }
 
   @override
   void initState() {
     super.initState();
     _updateStreamingApps();
+    _loadIconScale();
+  }
+
+  Future<void> _loadIconScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getDouble(_iconScalePrefKey);
+    if (!mounted) return;
+    if (value != null) {
+      setState(() => _iconScale = value.clamp(0.85, 1.3));
+    }
+  }
+
+  Future<void> _saveIconScale() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_iconScalePrefKey, _iconScale);
   }
 
   @override
@@ -79,7 +123,7 @@ class _StreamingTabState extends State<StreamingTab> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
           color: AppColors.primaryBlue,
         ),
@@ -93,7 +137,7 @@ class _StreamingTabState extends State<StreamingTab> {
       return Center(
         child: Text(
           AppLocalizations.of(context).libraryNoApps,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             color: AppColors.textSecondary,
           ),
@@ -109,9 +153,27 @@ class _StreamingTabState extends State<StreamingTab> {
             children: [
               Text(
                 AppLocalizations.of(context).librarySearchOnlyHint,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const Spacer(),
+              if (widget.useIconLayout) ...[
+                IconButton(
+                  onPressed: _decreaseIconScale,
+                  icon: const Icon(Icons.remove),
+                  color: AppColors.textPrimary,
+                  tooltip: 'Smaller tiles',
+                  focusNode:
+                      FocusNode(skipTraversal: true, canRequestFocus: false),
+                ),
+                IconButton(
+                  onPressed: _increaseIconScale,
+                  icon: const Icon(Icons.add),
+                  color: AppColors.textPrimary,
+                  tooltip: 'Larger tiles',
+                  focusNode:
+                      FocusNode(skipTraversal: true, canRequestFocus: false),
+                ),
+              ],
               IconButton(
                 onPressed: widget.onSearchPressed,
                 icon: const Icon(Icons.search),
@@ -152,7 +214,7 @@ class _StreamingTabState extends State<StreamingTab> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
         color: AppColors.textPrimary,
@@ -161,16 +223,30 @@ class _StreamingTabState extends State<StreamingTab> {
   }
 
   Widget _buildAppsGrid(List<AppInfo> apps) {
-    return GridView.builder(
+    final iconRows = _iconRowsFromScale();
+    final iconSpacing = _iconSpacingFromScale();
+    final gridDelegate = widget.useIconLayout
+        ? SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: iconRows,
+            childAspectRatio: 0.95,
+            crossAxisSpacing: iconSpacing,
+            mainAxisSpacing: iconSpacing,
+          )
+        : const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 5,
+            childAspectRatio: 0.62,
+            crossAxisSpacing: 18,
+            mainAxisSpacing: 20,
+          );
+
+    final grid = GridView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: widget.useIconLayout
+          ? const BouncingScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(0),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 5,
-        childAspectRatio: 0.56,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
+      gridDelegate: gridDelegate,
+      scrollDirection: widget.useIconLayout ? Axis.horizontal : Axis.vertical,
       itemCount: apps.length,
       itemBuilder: (context, index) {
         return FocusTraversalOrder(
@@ -178,6 +254,18 @@ class _StreamingTabState extends State<StreamingTab> {
           child: _buildAppCard(apps[index]),
         );
       },
+    );
+
+    if (!widget.useIconLayout) {
+      return grid;
+    }
+
+    final rows = _iconRowsFromScale();
+    final spacing = _iconSpacingFromScale();
+    final tileExtent = 110 * _iconScale;
+    return SizedBox(
+      height: tileExtent * rows + spacing * (rows - 1),
+      child: grid,
     );
   }
 
@@ -205,72 +293,103 @@ class _StreamingTabState extends State<StreamingTab> {
               return null;
             }),
           },
-          child: Focus(
-            child: Builder(
-              builder: (context) {
-                final focused = Focus.of(context).hasFocus;
-                return GestureDetector(
-                  onTap: () async {
-                    await widget.appsService.launchApp(app.packageName);
-                  },
-                  onLongPress: () {
-                    _showAppContextMenu(app);
-                  },
-                  child: MouseRegion(
-                    onEnter: (_) => Focus.of(context).requestFocus(),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 80),
+          onFocusChange: (hasFocus) {
+            if (hasFocus) {
+              Scrollable.ensureVisible(
+                context,
+                alignment: 0.35,
+                duration: const Duration(milliseconds: 120),
+                curve: Curves.easeOut,
+              );
+            }
+          },
+          child: Builder(
+            builder: (context) {
+              final focused = Focus.of(context).hasFocus;
+              return GestureDetector(
+                onTap: () async {
+                  await widget.appsService.launchApp(app.packageName);
+                },
+                onLongPress: () {
+                  _showAppContextMenu(app);
+                },
+                child: MouseRegion(
+                  onEnter: (_) => Focus.of(context).requestFocus(),
+                  child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 110),
+                      curve: Curves.easeOut,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(widget.useIconLayout ? 24 : 22),
+                        color: widget.useIconLayout
+                            ? AppColors.elevatedSurface.withValues(alpha: 0.94)
+                            : AppColors.elevatedSurface.withValues(alpha: 0.15),
+                        gradient: focused && !widget.useIconLayout
+                            ? LinearGradient(
+                                colors: [
+                                  AppColors.primaryBlue.withValues(alpha: 0.7),
+                                  AppColors.secondaryBlue.withValues(alpha: 0.85),
+                                  AppColors.primaryBlue.withValues(alpha: 0.7),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
                         border: Border.all(
-                          color: focused ? AppColors.primaryBlue : Colors.transparent,
-                          width: 4,
+                          color: widget.useIconLayout
+                              ? (focused
+                                  ? AppColors.secondaryBlue.withValues(alpha: 0.9)
+                                  : AppColors.divider)
+                              : (focused
+                                  ? AppColors.secondaryBlue.withValues(alpha: 0.7)
+                                  : AppColors.divider.withValues(alpha: 0.35)),
+                          width: widget.useIconLayout ? (focused ? 2.6 : 1.2) : (focused ? 2.6 : 1),
                         ),
+                        boxShadow: focused
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primaryBlue.withValues(alpha: 0.55),
+                                  blurRadius: 22,
+                                  spreadRadius: 1,
+                                ),
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.25),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                color: AppColors.elevatedSurface,
-                                image: _getCoverImage(app),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Stack(
-                                children: [],
+                            child: widget.useIconLayout
+                                ? _buildIconTileContent(app, focused)
+                                : _buildCoverTileContent(app),
+                          ),
+                          if (!widget.useIconLayout) ...[   
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
+                              child: Text(
+                                widget.displayNameProvider(app),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(
-                              widget.displayNameProvider(app),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
+                          ],
                         ],
                       ),
-                    ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
         ),
       ),
     );
@@ -327,7 +446,7 @@ class _StreamingTabState extends State<StreamingTab> {
                             children: [
                               Text(
                                 widget.displayNameProvider(app),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
@@ -335,7 +454,7 @@ class _StreamingTabState extends State<StreamingTab> {
                               ),
                               Text(
                                 app.packageName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
@@ -346,7 +465,7 @@ class _StreamingTabState extends State<StreamingTab> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    const Divider(color: AppColors.divider),
+                    Divider(color: AppColors.divider),
                     const SizedBox(height: 8),
                     _buildContextMenuItem(
                       icon: Icons.info_outline,
@@ -358,7 +477,7 @@ class _StreamingTabState extends State<StreamingTab> {
                     ),
                     _buildContextMenuItem(
                       icon: Icons.image,
-                      label: 'Choose Cover',
+                      label: widget.useIconLayout ? 'Choose Icon' : 'Choose Cover',
                       onTap: () {
                         Navigator.pop(context);
                         widget.onSetStreamingCover?.call(app, null);
@@ -422,19 +541,85 @@ class _StreamingTabState extends State<StreamingTab> {
     widget.onRemoveStreaming?.call(app, isGameStreaming);
   }
 
-  DecorationImage? _getCoverImage(AppInfo app) {
+  Widget _buildIconImage(AppInfo app) {
+    final iconImage = widget.iconImageProvider(app);
     final coverImage = widget.coverImageProvider(app);
-    if (coverImage != null) {
-      return DecorationImage(image: coverImage, fit: BoxFit.cover);
+    final imageProvider = iconImage ?? coverImage;
+
+    if (imageProvider != null) {
+      return Image(image: imageProvider, fit: BoxFit.contain);
     }
-    
-    if (app.icon != null) {
+
+    return Icon(
+      Icons.apps,
+      color: AppColors.textSecondary,
+      size: 36,
+    );
+  }
+
+  Widget _buildIconTileContent(AppInfo app, bool focused) {
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.darkSurface.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Center(
+          child: FractionallySizedBox(
+            widthFactor: 0.8,
+            heightFactor: 0.8,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                color: AppColors.elevatedSurface.withValues(alpha: 0.75),
+                child: _buildIconImage(app),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCoverTileContent(AppInfo app) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.elevatedSurface,
+            image: _getAppImage(app),
+          ),
+          child: _getAppImage(app) == null
+              ? Center(
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: AppColors.textSecondary,
+                    size: 28,
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
+  DecorationImage? _getAppImage(AppInfo app) {
+    final iconImage = widget.iconImageProvider(app);
+    final coverImage = widget.coverImageProvider(app);
+    final imageProvider = widget.useIconLayout
+        ? (iconImage ?? coverImage)
+        : (coverImage ?? iconImage);
+
+    if (imageProvider != null) {
       return DecorationImage(
-        image: MemoryImage(app.icon!),
-        fit: BoxFit.cover,
+        image: imageProvider,
+        fit: widget.useIconLayout ? BoxFit.contain : BoxFit.cover,
       );
     }
-    
+
     return null;
   }
 }

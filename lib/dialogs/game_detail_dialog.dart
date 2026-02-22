@@ -13,6 +13,7 @@ class GameDetailDialog extends StatelessWidget {
   final Function(Game) onLaunch;
   final Function(Game) onSetBanner;
   final Function(Game) onSetCover;
+  final Function(Game) onSetIcon;
   final FocusNode? focusNode;
   final GameLibraryService libraryService;
 
@@ -23,6 +24,7 @@ class GameDetailDialog extends StatelessWidget {
     required this.onLaunch,
     required this.onSetBanner,
     required this.onSetCover,
+    required this.onSetIcon,
     required this.libraryService,
     this.focusNode,
   });
@@ -62,17 +64,17 @@ class GameDetailDialog extends StatelessWidget {
         backgroundColor: AppColors.elevatedSurface,
         title: Text(
           AppLocalizations.of(context).gameDetailsRemoveDialogTitle,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
           AppLocalizations.of(context).gameDetailsRemoveDialogMessage(game.title),
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(AppLocalizations.of(context).gameDetailsCancel,
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -100,17 +102,17 @@ class GameDetailDialog extends StatelessWidget {
         backgroundColor: AppColors.elevatedSurface,
         title: Text(
           AppLocalizations.of(context).gameDetailsUninstallDialogTitle,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
           AppLocalizations.of(context).gameDetailsUninstallDialogMessage(game.title),
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(AppLocalizations.of(context).gameDetailsCancel,
-                style: const TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -162,7 +164,7 @@ class GameDetailDialog extends StatelessWidget {
         color: AppColors.elevatedSurface,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Icon(Icons.videogame_asset, size: 64, color: AppColors.textSecondary),
+      child: Icon(Icons.videogame_asset, size: 64, color: AppColors.textSecondary),
     );
   }
 
@@ -194,7 +196,7 @@ class GameDetailDialog extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.elevatedSurface,
       ),
-      child: const Icon(Icons.image, size: 48, color: AppColors.textSecondary),
+      child: Icon(Icons.image, size: 48, color: AppColors.textSecondary),
     );
   }
 
@@ -211,13 +213,13 @@ class GameDetailDialog extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: onClose,
-                  icon: const Icon(Icons.arrow_back, color: AppColors.primaryBlue),
+                  icon: Icon(Icons.arrow_back, color: AppColors.primaryBlue),
                   tooltip: AppLocalizations.of(context).actionBack,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context).gameDetailsTitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
@@ -319,7 +321,7 @@ class GameDetailDialog extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               game.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
@@ -329,18 +331,18 @@ class GameDetailDialog extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 game.packageName!,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
               ),
             ],
             const SizedBox(height: 32),
             Row(
               children: [
-                const Icon(Icons.access_time, color: AppColors.textSecondary, size: 18),
+                Icon(Icons.access_time, color: AppColors.textSecondary, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context)
                       .gameDetailsPlayTime(_formatPlayTime(game.playTimeSeconds)),
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                 ),
               ],
             ),
@@ -348,13 +350,13 @@ class GameDetailDialog extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.calendar_today, color: AppColors.textSecondary, size: 18),
+                  Icon(Icons.calendar_today, color: AppColors.textSecondary, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     AppLocalizations.of(context).gameDetailsLastPlayed(
                       _formatLastPlayed(game.lastPlayed!, context),
                     ),
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                   ),
                 ],
               ),
@@ -362,7 +364,7 @@ class GameDetailDialog extends StatelessWidget {
             const SizedBox(height: 32),
             Text(
               AppLocalizations.of(context).gameDetailsArtwork,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 12),
             Row(
@@ -374,7 +376,7 @@ class GameDetailDialog extends StatelessWidget {
                     label: Text(AppLocalizations.of(context).gameDetailsSetCover),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryBlue,
-                      side: const BorderSide(color: AppColors.primaryBlue),
+                      side: BorderSide(color: AppColors.primaryBlue),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
@@ -388,7 +390,7 @@ class GameDetailDialog extends StatelessWidget {
                     label: Text(AppLocalizations.of(context).gameDetailsSetBanner),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryBlue,
-                      side: const BorderSide(color: AppColors.primaryBlue),
+                      side: BorderSide(color: AppColors.primaryBlue),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
@@ -396,10 +398,25 @@ class GameDetailDialog extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => onSetIcon(game),
+                icon: const Icon(Icons.apps, size: 20),
+                label: Text(AppLocalizations.of(context).gameDetailsSetIcon),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryBlue,
+                  side: BorderSide(color: AppColors.primaryBlue),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             Text(
               AppLocalizations.of(context).gameDetailsManagement,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -410,7 +427,7 @@ class GameDetailDialog extends StatelessWidget {
                 label: Text(AppLocalizations.of(context).gameDetailsRemoveFromLibrary),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.textSecondary,
-                  side: const BorderSide(color: AppColors.divider),
+                  side: BorderSide(color: AppColors.divider),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
@@ -426,7 +443,7 @@ class GameDetailDialog extends StatelessWidget {
                   label: Text(AppLocalizations.of(context).gameDetailsUninstallApp),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.secondaryBlue,
-                    side: const BorderSide(color: AppColors.secondaryBlue),
+                    side: BorderSide(color: AppColors.secondaryBlue),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
