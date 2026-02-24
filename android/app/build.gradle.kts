@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -15,15 +17,31 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getProperty("user.home") + "/.gradle/local.properties"
+            val localProps = Properties()
+            if (file(keystorePath).exists()) {
+                localProps.load(file(keystorePath).inputStream())
+            } else {
+                localProps.load(file("${project.projectDir}/../local.properties").inputStream())
+            }
+            
+            storeFile = file(localProps["KEYSTORE_PATH"].toString())
+            storePassword = localProps["KEYSTORE_PASSWORD"].toString()
+            keyAlias = localProps["KEY_ALIAS"].toString()
+            keyPassword = localProps["KEY_PASSWORD"].toString()
+        }
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "org.plazanet.gameplaza"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -32,9 +50,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
