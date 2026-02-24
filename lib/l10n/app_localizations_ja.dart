@@ -225,10 +225,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsPresenceOverallDesc => 'PlazaNetでオンライン状態を共有';
 
   @override
-  String get settingsPresenceGame => 'ゲームのプレゼンス';
-
-  @override
-  String get settingsPresenceGameDesc => '現在プレイ中のゲームを表示';
 
   @override
   String get settingsPresenceLoginRequired => 'PlazaNetにログインしてプレゼンス追跡を有効にしてください';
@@ -256,6 +252,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsLayoutCompact => 'コンパクトタイル';
+
+  @override
+  String get settingsUseHomeAsLibrary => 'ホームをライブラリとして使用';
+
+  @override
+  String get settingsUseHomeAsLibraryDesc => 'ホームタブにライブラリコンテンツを表示し、ライブラリタブを非表示にする';
 
   @override
   String get settingsColorPalette => 'カラーパレット';

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
@@ -72,6 +71,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: AppLocalizations.of(context).settingsAppearance,
             children: [
               _LayoutPicker(onSettingsChanged: widget.onSettingsChanged),
+              const SizedBox(height: 16),
+              _UseHomeAsLibraryToggle(onSettingsChanged: widget.onSettingsChanged),
               const SizedBox(height: 16),
               _ColorPalettePicker(onSettingsChanged: widget.onSettingsChanged),
             ],
@@ -238,6 +239,83 @@ class _LayoutPickerState extends State<_LayoutPicker> {
                 _setLayoutMode(value);
               }
             },
+          ),
+      ],
+    );
+  }
+}
+
+class _UseHomeAsLibraryToggle extends StatefulWidget {
+  final Future<void> Function()? onSettingsChanged;
+
+  const _UseHomeAsLibraryToggle({
+    this.onSettingsChanged,
+  });
+
+  @override
+  State<_UseHomeAsLibraryToggle> createState() => _UseHomeAsLibraryToggleState();
+}
+
+class _UseHomeAsLibraryToggleState extends State<_UseHomeAsLibraryToggle> {
+  static const String _prefKey = 'use_home_as_library';
+  bool _useHomeAsLibrary = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreference();
+  }
+
+  Future<void> _loadPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _useHomeAsLibrary = prefs.getBool(_prefKey) ?? false;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _setPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefKey, value);
+    if (!mounted) return;
+    setState(() => _useHomeAsLibrary = value);
+    await widget.onSettingsChanged?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.settingsUseHomeAsLibrary,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.settingsUseHomeAsLibraryDesc,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        if (_isLoading)
+          const LinearProgressIndicator()
+        else
+          SwitchListTile(
+            value: _useHomeAsLibrary,
+            onChanged: _setPreference,
+            title: Text(
+              _useHomeAsLibrary ? 'Enabled' : 'Disabled',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
+            activeColor: AppColors.primaryBlue,
+            contentPadding: EdgeInsets.zero,
           ),
       ],
     );
@@ -531,13 +609,11 @@ class _PresenceToggleSwitch extends StatefulWidget {
 
 class _PresenceToggleSwitchState extends State<_PresenceToggleSwitch> {
   late Future<bool> _overallEnabledFuture;
-  late Future<bool> _gameEnabledFuture;
 
   @override
   void initState() {
     super.initState();
     _overallEnabledFuture = widget.presenceService.isOverallPresenceEnabled();
-    _gameEnabledFuture = widget.presenceService.isGamePresenceEnabled();
   }
 
   @override
@@ -546,59 +622,21 @@ class _PresenceToggleSwitchState extends State<_PresenceToggleSwitch> {
       future: _overallEnabledFuture,
       builder: (context, overallSnapshot) {
         final overallEnabled = overallSnapshot.data ?? false;
-        return FutureBuilder<bool>(
-          future: _gameEnabledFuture,
-          builder: (context, gameSnapshot) {
-            final gameEnabled = gameSnapshot.data ?? false;
-            return Column(
-              children: [
-                SwitchListTile(
-                  title: Text(AppLocalizations.of(context).settingsPresenceOverall,
-                      style: TextStyle(color: AppColors.textPrimary)),
-                  subtitle: Text(
-                    AppLocalizations.of(context).settingsPresenceOverallDesc,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                  ),
-                  value: overallEnabled,
-                  activeThumbColor: AppColors.primaryBlue,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (value) async {
-                    await widget.presenceService.setOverallPresenceEnabled(value);
-                    setState(() {
-                      _overallEnabledFuture = Future.value(value);
-                      _gameEnabledFuture = Future.value(value ? gameEnabled : false);
-                    });
-                    if (!value) {
-                      try {
-                        const MethodChannel('org.plazanet.gameplaza/presence')
-                            .invokeMethod('stopPresenceService');
-                      } catch (e) {
-                      }
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  title: Text(AppLocalizations.of(context).settingsPresenceGame,
-                      style: TextStyle(color: AppColors.textPrimary)),
-                  subtitle: Text(
-                    AppLocalizations.of(context).settingsPresenceGameDesc,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                  ),
-                  value: overallEnabled && gameEnabled,
-                  activeThumbColor: AppColors.primaryBlue,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: overallEnabled
-                      ? (value) async {
-                          await widget.presenceService.setGamePresenceEnabled(value);
-                          setState(() {
-                            _gameEnabledFuture = Future.value(value);
-                          });
-                        }
-                      : null,
-                ),
-              ],
-            );
+        return SwitchListTile(
+          title: Text(AppLocalizations.of(context).settingsPresenceOverall,
+              style: TextStyle(color: AppColors.textPrimary)),
+          subtitle: Text(
+            AppLocalizations.of(context).settingsPresenceOverallDesc,
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+          value: overallEnabled,
+          activeThumbColor: AppColors.primaryBlue,
+          contentPadding: EdgeInsets.zero,
+          onChanged: (value) async {
+            await widget.presenceService.setOverallPresenceEnabled(value);
+            setState(() {
+              _overallEnabledFuture = Future.value(value);
+            });
           },
         );
       },

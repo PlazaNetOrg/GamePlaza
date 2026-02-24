@@ -225,10 +225,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsPresenceOverallDesc => 'Udostępniaj swój status online w PlazaNet';
 
   @override
-  String get settingsPresenceGame => 'Obecność w grze';
-
-  @override
-  String get settingsPresenceGameDesc => 'Pokaż, w jaką grę aktualnie grasz';
 
   @override
   String get settingsPresenceLoginRequired => 'Zaloguj się do PlazaNet, aby włączyć obecność';
@@ -256,6 +252,12 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsLayoutCompact => 'Kompaktowe kafelki';
+
+  @override
+  String get settingsUseHomeAsLibrary => 'Użyj Strona główna jako Biblioteka';
+
+  @override
+  String get settingsUseHomeAsLibraryDesc => 'Wyświetl treść biblioteki na karcie Strona główna i ukryj kartę Biblioteka';
 
   @override
   String get settingsColorPalette => 'Paleta kolorów';

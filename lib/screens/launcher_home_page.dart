@@ -64,6 +64,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   bool _showGameStreaming = false;
   bool _showVideoStreaming = false;
   LayoutMode _layoutMode = LayoutMode.classic;
+  bool _useHomeAsLibrary = false;
   List<String> _gameStreamingApps = [];
   List<String> _videoStreamingApps = [];
   late TabController _tabController;
@@ -78,6 +79,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   StreamSubscription<BatteryState>? _batterySubscription;
   StreamSubscription<ShortcutInfo>? _shortcutSubscription;
   StreamSubscription<DisplayState>? _displaySubscription;
+  bool _isAppActive = true;
 
   // Desktop mode
   bool _desktopMode = false;
@@ -95,13 +97,15 @@ class _LauncherHomePageState extends State<LauncherHomePage>
 
   List<NavigationItem> _navItems(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return [
+    final items = [
       NavigationItem(assetPath: 'assets/images/home.png', label: l10n.navHome),
-      NavigationItem(assetPath: 'assets/images/library.png', label: l10n.navLibrary),
+      if (!_useHomeAsLibrary)
+        NavigationItem(assetPath: 'assets/images/library.png', label: l10n.navLibrary),
       NavigationItem(assetPath: 'assets/images/plazanet.png', label: l10n.navPlazaNet),
       NavigationItem(assetPath: 'assets/images/store.png', label: l10n.navStore),
       NavigationItem(assetPath: 'assets/images/settings.png', label: l10n.navSettings),
     ];
+    return items;
   }
 
   Widget _buildNavIcon(NavigationItem item, {required bool isSelected, double size = 24}) {
@@ -139,7 +143,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     _initShortcutService();
     _initDisplayMode();
     _restorePendingPlaySession();
-    _initializePresence();
+    _updatePresenceForSelectedTab();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
     _batterySubscription = _battery.onBatteryStateChanged.listen((state) {
@@ -294,10 +298,24 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   Future<void> _loadLayoutMode() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(layoutModePrefKey);
+    final useHomeAsLibrary = prefs.getBool('use_home_as_library') ?? false;
     if (!mounted) return;
+    final previousUseHomeAsLibrary = _useHomeAsLibrary;
     setState(() {
       _layoutMode = layoutModeFromString(raw);
+      _useHomeAsLibrary = useHomeAsLibrary;
     });
+    if (previousUseHomeAsLibrary != _useHomeAsLibrary) {
+      final mappedIndex = _useHomeAsLibrary
+          ? (_selectedIndex == 0 ? 0 : _selectedIndex - 1)
+          : (_selectedIndex == 0 ? 0 : _selectedIndex + 1);
+      setState(() => _selectedIndex = mappedIndex);
+    }
+    final maxIndex = _navItems(context).length - 1;
+    if (_selectedIndex > maxIndex) {
+      setState(() => _selectedIndex = maxIndex);
+    }
+    _updatePresenceForSelectedTab();
   }
 
   void _applyStreamingTabSettings(bool gameStreaming, bool videoStreaming) {
@@ -433,17 +451,22 @@ class _LauncherHomePageState extends State<LauncherHomePage>
     }
   }
 
-  void _initializePresence() async {
-    if (await _presenceService.hasAuthToken()) {
+  bool _isPlazaNetSelected() {
+    return _selectedIndex == (_useHomeAsLibrary ? 1 : 2);
+  }
+
+  Future<void> _updatePresenceForSelectedTab() async {
+    if (!_isAppActive) return;
+    if (_isPlazaNetSelected()) {
       await _presenceService.goOnline();
+    } else {
+      await _presenceService.goOffline();
     }
   }
 
   Future<void> _launchGame(Game game) async {
     await _startPlaySession(game);
     await _markGamePlayed(game);
-    
-    await _presenceService.startPlayingGame(game.title);
 
     if (game.packageName != null) {
       final success = game.shortcutId != null
@@ -516,8 +539,6 @@ class _LauncherHomePageState extends State<LauncherHomePage>
         setState(() => _selectedGame = updated);
       }
     }
-
-    await _presenceService.stopPlayingGame();
   }
 
   Future<void> _markGamePlayed(Game game) async {
@@ -687,7 +708,9 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   }
 
   List<ActionHint> _currentActionHints() {
-    if (_selectedIndex != 1) return [];
+    final isLibraryScreen = _useHomeAsLibrary ? (_selectedIndex == 0) : (_selectedIndex == 1);
+    
+    if (!isLibraryScreen) return [];
     if (_tabController.index == 1) {
       return [
         ActionHint(button: 'A', label: AppLocalizations.of(context).actionOpenApp),
@@ -752,11 +775,14 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
+      _isAppActive = false;
+      _presenceService.goOffline();
     } else if (state == AppLifecycleState.resumed) {
+      _isAppActive = true;
       if (_playSessionStart != null || _playSessionGameId != null) {
         unawaited(_completePlaySession());
       } else {
-        _presenceService.goOnline();
+        _updatePresenceForSelectedTab();
       }
     }
   }
@@ -792,9 +818,10 @@ class _LauncherHomePageState extends State<LauncherHomePage>
             return null;
           }),
           SearchIntent: CallbackAction<SearchIntent>(onInvoke: (_) {
-            if (_selectedIndex == 1 && _tabController.index == 0) {
+            final isLibraryScreen = _useHomeAsLibrary ? (_selectedIndex == 0) : (_selectedIndex == 1);
+            if (isLibraryScreen && _tabController.index == 0) {
               _showSearchDialog('Search games', (v) => setState(() => _searchQuery = v));
-            } else if (_selectedIndex == 1) {
+            } else if (isLibraryScreen) {
               _showSearchDialog('Search apps', (v) => setState(() => _appsSearchQuery = v));
             }
             return null;
@@ -902,17 +929,25 @@ class _LauncherHomePageState extends State<LauncherHomePage>
 
   Widget _buildPlazaNetContent() {
     final items = _navItems(context);
+    final plazaNetItem = items.firstWhere(
+      (item) => item.assetPath == 'assets/images/plazanet.png',
+      orElse: () => NavigationItem(assetPath: 'assets/images/plazanet.png', label: AppLocalizations.of(context).navPlazaNet),
+    );
     return PlazaNetScreen(
-      label: items[2].label,
-      icon: items[2].icon ?? Icons.cloud,
+      label: plazaNetItem.label,
+      icon: plazaNetItem.icon ?? Icons.cloud,
     );
   }
 
   Widget _buildStoreContent() {
     final items = _navItems(context);
+    final storeItem = items.firstWhere(
+      (item) => item.assetPath == 'assets/images/store.png',
+      orElse: () => NavigationItem(assetPath: 'assets/images/store.png', label: AppLocalizations.of(context).navStore),
+    );
     return StoreScreen(
-      label: items[3].label,
-      icon: items[3].icon ?? Icons.store,
+      label: storeItem.label,
+      icon: storeItem.icon ?? Icons.store,
     );
   }
 
@@ -928,22 +963,40 @@ class _LauncherHomePageState extends State<LauncherHomePage>
 
   Widget _buildScreenContent() {
     Widget body;
-    if (_selectedIndex == 0) {
-      body = _buildHomeContent();
-    } else if (_selectedIndex == 1) {
-      body = _buildLibraryContent();
-    } else if (_selectedIndex == 2) {
-      body = _buildPlazaNetContent();
-    } else if (_selectedIndex == 3) {
-      body = _buildStoreContent();
+    
+    if (_useHomeAsLibrary) {
+      if (_selectedIndex == 0) {
+        body = _buildLibraryContent(); // Show library on home
+      } else if (_selectedIndex == 1) {
+        body = _buildPlazaNetContent();
+      } else if (_selectedIndex == 2) {
+        body = _buildStoreContent();
+      } else {
+        body = _buildSettingsContent();
+      }
     } else {
-      body = _buildSettingsContent();
+      if (_selectedIndex == 0) {
+        body = _buildHomeContent();
+      } else if (_selectedIndex == 1) {
+        body = _buildLibraryContent();
+      } else if (_selectedIndex == 2) {
+        body = _buildPlazaNetContent();
+      } else if (_selectedIndex == 3) {
+        body = _buildStoreContent();
+      } else {
+        body = _buildSettingsContent();
+      }
     }
 
     final showTopBar = _layoutMode != LayoutMode.handheld;
+    final l10n = AppLocalizations.of(context);
+    final displayLabel = (_useHomeAsLibrary && _selectedIndex == 0) 
+        ? l10n.navLibrary 
+        : _navItems(context)[_selectedIndex].label;
+    
     return Column(
       children: [
-        if (showTopBar) TopBarWidget(label: _navItems(context)[_selectedIndex].label),
+        if (showTopBar) TopBarWidget(label: displayLabel),
         Expanded(child: body),
         ActionGuideWidget(hints: _currentActionHints()),
       ],
@@ -964,10 +1017,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
           currentTime: _currentTime,
           batteryLevel: _batteryLevel,
           batteryState: _batteryState,
-          onNavItemPressed: (index) => setState(() {
-            _selectedIndex = index;
-            _selectedGame = null;
-          }),
+          onNavItemPressed: _onNavItemSelected,
         ),
         Expanded(
           child: FocusTraversalGroup(
@@ -1001,14 +1051,19 @@ class _LauncherHomePageState extends State<LauncherHomePage>
           batteryLevel: _batteryLevel,
           batteryState: _batteryState,
           userName: _userName,
-          onSelected: (index) => setState(() {
-            _selectedIndex = index;
-            _selectedGame = null;
-          }),
+          onSelected: _onNavItemSelected,
         ),
         const _HandheldBezelEdge(isTop: false),
       ],
     );
+  }
+
+  void _onNavItemSelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+      _selectedGame = null;
+    });
+    _updatePresenceForSelectedTab();
   }
 
   Widget _buildDesktopMode() {

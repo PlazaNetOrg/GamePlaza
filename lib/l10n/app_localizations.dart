@@ -101,8 +101,6 @@ abstract class AppLocalizations {
   String get settingsBackgroundTrackingDesc;
   String get settingsPresenceOverall;
   String get settingsPresenceOverallDesc;
-  String get settingsPresenceGame;
-  String get settingsPresenceGameDesc;
   String get settingsPresenceLoginRequired;
   String get settingsSteamGridDbTitle;
   String get settingsSteamGridDbDescription;
@@ -112,6 +110,8 @@ abstract class AppLocalizations {
   String get settingsLayoutClassic;
   String get settingsLayoutHandheld;
   String get settingsLayoutCompact;
+  String get settingsUseHomeAsLibrary;
+  String get settingsUseHomeAsLibraryDesc;
   String get settingsColorPalette;
   String get settingsColorPaletteDesc;
   String get settingsColorPalettePlazaNet;

@@ -224,10 +224,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPresenceOverallDesc => 'Share your online status across PlazaNet';
 
   @override
-  String get settingsPresenceGame => 'Game Presence';
-
-  @override
-  String get settingsPresenceGameDesc => 'Show which game you\'re currently playing';
 
   @override
   String get settingsPresenceLoginRequired => 'Log in to PlazaNet to enable presence tracking';
@@ -254,6 +250,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLayoutCompact => 'Compact Tiles';
+
+  @override
+  String get settingsUseHomeAsLibrary => 'Use Home as Library';
+
+  @override
+  String get settingsUseHomeAsLibraryDesc => 'Show library content on Home tab and hide the Library tab';
 
   @override
   String get settingsColorPalette => 'Color Palette';
