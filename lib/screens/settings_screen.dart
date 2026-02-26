@@ -403,6 +403,22 @@ class _ColorPalettePickerState extends State<_ColorPalettePicker> {
                 value: ColorPalette.nostalgiaWhite,
                 child: Text(l10n.settingsColorPaletteNostalgiaWhite),
               ),
+              DropdownMenuItem(
+                value: ColorPalette.catppuccinLatte,
+                child: Text(l10n.settingsColorPaletteCatppuccinLatte),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.catppuccinFrappe,
+                child: Text(l10n.settingsColorPaletteCatppuccinFrappe),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.catppuccinMacchiato,
+                child: Text(l10n.settingsColorPaletteCatppuccinMacchiato),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.catppuccinMocha,
+                child: Text(l10n.settingsColorPaletteCatppuccinMocha),
+              ),
             ],
             onChanged: (value) {
               if (value != null) {

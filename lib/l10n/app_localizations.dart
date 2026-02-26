@@ -116,6 +116,10 @@ abstract class AppLocalizations {
   String get settingsColorPaletteDesc;
   String get settingsColorPalettePlazaNet;
   String get settingsColorPaletteNostalgiaWhite;
+  String get settingsColorPaletteCatppuccinLatte;
+  String get settingsColorPaletteCatppuccinFrappe;
+  String get settingsColorPaletteCatppuccinMacchiato;
+  String get settingsColorPaletteCatppuccinMocha;
   String get settingsStreaming;
   String get settingsGameStreaming;
   String get settingsGameStreamingDesc;

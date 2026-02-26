@@ -272,6 +272,18 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsColorPaletteNostalgiaWhite => 'Nostalgia White (Czysty i jasny)';
 
   @override
+  String get settingsColorPaletteCatppuccinLatte => 'Catppuccin Latte';
+
+  @override
+  String get settingsColorPaletteCatppuccinFrappe => 'Catppuccin Frappe';
+
+  @override
+  String get settingsColorPaletteCatppuccinMacchiato => 'Catppuccin Macchiato';
+
+  @override
+  String get settingsColorPaletteCatppuccinMocha => 'Catppuccin Mocha';
+
+  @override
   String get settingsStreaming => 'Streaming';
 
   @override
