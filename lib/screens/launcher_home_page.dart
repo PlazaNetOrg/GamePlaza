@@ -988,7 +988,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
       }
     }
 
-    final showTopBar = _layoutMode != LayoutMode.handheld;
+    final showTopBar = _layoutMode != LayoutMode.handheld && _layoutMode != LayoutMode.console;
     final l10n = AppLocalizations.of(context);
     final displayLabel = (_useHomeAsLibrary && _selectedIndex == 0) 
         ? l10n.navLibrary 
@@ -1004,7 +1004,7 @@ class _LauncherHomePageState extends State<LauncherHomePage>
   }
 
   Widget _buildNormalBody() {
-    if (_layoutMode == LayoutMode.handheld) {
+    if (_layoutMode == LayoutMode.handheld || _layoutMode == LayoutMode.console) {
       return _buildHandheldBody();
     }
 

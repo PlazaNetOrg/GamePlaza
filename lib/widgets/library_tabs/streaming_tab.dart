@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
 
 import '../../theme/app_colors.dart';
+import '../../models/layout_mode.dart';
 import '../../services/installed_apps_service.dart';
 import '../../shortcuts/app_intents.dart';
 import '../../l10n/app_localizations.dart';
+import '../../utils/responsive.dart';
 
 class StreamingTab extends StatefulWidget {
   final List<AppInfo> installedApps;
@@ -26,6 +27,7 @@ class StreamingTab extends StatefulWidget {
   final ImageProvider? Function(AppInfo) iconImageProvider;
   final String Function(AppInfo) displayNameProvider;
   final bool useIconLayout;
+  final LayoutMode layoutMode;
 
   const StreamingTab({
     super.key,
@@ -44,6 +46,7 @@ class StreamingTab extends StatefulWidget {
     required this.iconImageProvider,
     required this.displayNameProvider,
     this.useIconLayout = false,
+    required this.layoutMode,
     this.gameStreamingApps = const [],
     this.videoStreamingApps = const [],
   });
@@ -223,21 +226,30 @@ class _StreamingTabState extends State<StreamingTab> {
   }
 
   Widget _buildAppsGrid(List<AppInfo> apps) {
+    if (widget.layoutMode == LayoutMode.console) {
+      return _buildConsoleCoverWheel(apps);
+    }
+
     final iconRows = _iconRowsFromScale();
     final iconSpacing = _iconSpacingFromScale();
-    final gridDelegate = widget.useIconLayout
-        ? SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: iconRows,
-            childAspectRatio: 0.95,
-            crossAxisSpacing: iconSpacing,
-            mainAxisSpacing: iconSpacing,
-          )
-        : const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            childAspectRatio: 0.62,
-            crossAxisSpacing: 18,
-            mainAxisSpacing: 20,
-          );
+    final responsive = Responsive.of(context);
+    
+    final SliverGridDelegate gridDelegate;
+    if (widget.useIconLayout) {
+      gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: iconRows,
+        childAspectRatio: 0.95,
+        crossAxisSpacing: iconSpacing,
+        mainAxisSpacing: iconSpacing,
+      );
+    } else {
+      gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: responsive.gridColumns,
+        childAspectRatio: 0.62,
+        crossAxisSpacing: responsive.gridSpacing,
+        mainAxisSpacing: responsive.gridSpacing,
+      );
+    }
 
     final grid = GridView.builder(
       shrinkWrap: true,
@@ -269,7 +281,34 @@ class _StreamingTabState extends State<StreamingTab> {
     );
   }
 
-  Widget _buildAppCard(AppInfo app) {
+  Widget _buildConsoleCoverWheel(List<AppInfo> apps) {
+    final responsive = Responsive.of(context);
+    return SizedBox(
+      height: responsive.consoleCardHeight,
+      child: ListView.separated(
+        padding: EdgeInsets.symmetric(
+          horizontal: responsive.horizontalPadding * 0.5,
+          vertical: 6,
+        ),
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: apps.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 18),
+        itemBuilder: (context, index) {
+          return SizedBox(
+            width: responsive.consoleCardWidth,
+            height: responsive.consoleCardHeight,
+            child: FocusTraversalOrder(
+              order: NumericFocusOrder(index.toDouble()),
+              child: _buildAppCard(apps[index], isLarge: true),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAppCard(AppInfo app, {bool isLarge = false}) {
     return Shortcuts(
       shortcuts: const {
         SingleActivator(LogicalKeyboardKey.gameButtonStart):
@@ -368,7 +407,7 @@ class _StreamingTabState extends State<StreamingTab> {
                                 ? _buildIconTileContent(app, focused)
                                 : _buildCoverTileContent(app),
                           ),
-                          if (!widget.useIconLayout) ...[   
+                          if (!widget.useIconLayout && !isLarge) ...[   
                             Padding(
                               padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
                               child: Text(
@@ -609,9 +648,15 @@ class _StreamingTabState extends State<StreamingTab> {
   DecorationImage? _getAppImage(AppInfo app) {
     final iconImage = widget.iconImageProvider(app);
     final coverImage = widget.coverImageProvider(app);
-    final imageProvider = widget.useIconLayout
-        ? (iconImage ?? coverImage)
-        : (coverImage ?? iconImage);
+
+    final ImageProvider? imageProvider;
+    if (widget.layoutMode == LayoutMode.console) {
+      imageProvider = coverImage;
+    } else {
+      imageProvider = widget.useIconLayout
+          ? (iconImage ?? coverImage)
+          : (coverImage ?? iconImage);
+    }
 
     if (imageProvider != null) {
       return DecorationImage(

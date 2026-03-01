@@ -8,6 +8,11 @@ enum ColorPalette {
   catppuccinFrappe,
   catppuccinMacchiato,
   catppuccinMocha,
+  neonNight,
+  auroraStream,
+  dark,
+  oled,
+  neonEdge,
 }
 
 extension ColorPaletteExtension on ColorPalette {
@@ -25,6 +30,16 @@ extension ColorPaletteExtension on ColorPalette {
         return 'catppuccin_macchiato';
       case ColorPalette.catppuccinMocha:
         return 'catppuccin_mocha';
+      case ColorPalette.neonNight:
+        return 'neon_night';
+      case ColorPalette.auroraStream:
+        return 'aurora_stream';
+      case ColorPalette.dark:
+        return 'dark';
+      case ColorPalette.oled:
+        return 'oled';
+      case ColorPalette.neonEdge:
+        return 'neon_edge';
     }
   }
 
@@ -41,6 +56,16 @@ extension ColorPaletteExtension on ColorPalette {
         return ColorPalette.catppuccinMacchiato;
       case 'catppuccin_mocha':
         return ColorPalette.catppuccinMocha;
+      case 'neon_night':
+        return ColorPalette.neonNight;
+      case 'aurora_stream':
+        return ColorPalette.auroraStream;
+      case 'dark':
+        return ColorPalette.dark;
+      case 'oled':
+        return ColorPalette.oled;
+      case 'neon_edge':
+        return ColorPalette.neonEdge;
       case 'plazanet':
       default:
         return ColorPalette.plazanet;
@@ -145,6 +170,61 @@ class PaletteColors {
     divider: Color(0xFF585B70),
   );
 
+  // Neon Night Palette
+  static const neonNight = PaletteColors(
+    primaryBlue: Color(0xFF00E5FF),
+    secondaryBlue: Color(0xFF7C4DFF),
+    darkSurface: Color(0xFF090B1A),
+    elevatedSurface: Color(0xFF141833),
+    textPrimary: Color(0xFFEAF6FF),
+    textSecondary: Color(0xFF93A4C8),
+    divider: Color(0xFF2A315C),
+  );
+
+  // Aurora Stream Palette
+  static const auroraStream = PaletteColors(
+    primaryBlue: Color(0xFF4FD1C5),
+    secondaryBlue: Color(0xFF60A5FA),
+    darkSurface: Color(0xFF0C1724),
+    elevatedSurface: Color(0xFF16263A),
+    textPrimary: Color(0xFFE8F7FF),
+    textSecondary: Color(0xFF9CB7CB),
+    divider: Color(0xFF2C4258),
+  );
+
+  // Dark Palette
+  static const dark = PaletteColors(
+    primaryBlue: Color(0xFF3B82F6),
+    secondaryBlue: Color(0xFF60A5FA),
+    darkSurface: Color(0xFF121317),
+    elevatedSurface: Color(0xFF1D2129),
+    textPrimary: Color(0xFFF3F4F6),
+    textSecondary: Color(0xFF9CA3AF),
+    divider: Color(0xFF374151),
+  );
+
+  // OLED Palette
+  static const oled = PaletteColors(
+    primaryBlue: Color(0xFF22D3EE),
+    secondaryBlue: Color(0xFF38BDF8),
+    darkSurface: Color(0xFF000000),
+    elevatedSurface: Color(0xFF0A0A0A),
+    textPrimary: Color(0xFFF9FAFB),
+    textSecondary: Color(0xFF9CA3AF),
+    divider: Color(0xFF1F2937),
+  );
+
+  // Neon Edge Palette
+  static const neonEdge = PaletteColors(
+    primaryBlue: Color(0xFFFFCB00),
+    secondaryBlue: Color(0xFFF20544),
+    darkSurface: Color(0xFF0A0A0E),
+    elevatedSurface: Color(0xFF151519),
+    textPrimary: Color(0xFFF5F5DC),
+    textSecondary: Color(0xFFA8A8A8),
+    divider: Color(0xFF2A2A2E),
+  );
+
   static PaletteColors fromPalette(ColorPalette palette) {
     switch (palette) {
       case ColorPalette.plazanet:
@@ -159,6 +239,16 @@ class PaletteColors {
         return catppuccinMacchiato;
       case ColorPalette.catppuccinMocha:
         return catppuccinMocha;
+      case ColorPalette.neonNight:
+        return neonNight;
+      case ColorPalette.auroraStream:
+        return auroraStream;
+      case ColorPalette.dark:
+        return dark;
+      case ColorPalette.oled:
+        return oled;
+      case ColorPalette.neonEdge:
+        return neonEdge;
     }
   }
 }

@@ -118,6 +118,7 @@ class _LibraryTabsManagerState extends State<LibraryTabsManager> {
         coverImageProvider: widget.coverImageProvider,
         iconImageProvider: widget.iconImageProvider,
         useIconLayout: widget.layoutMode == LayoutMode.handheld || widget.layoutMode == LayoutMode.compact,
+        layoutMode: widget.layoutMode,
         onSearchQueryChanged: widget.onGamesSearchQueryChanged,
       ),
       if (_showStreamingTab)
@@ -136,6 +137,7 @@ class _LibraryTabsManagerState extends State<LibraryTabsManager> {
           coverImageProvider: widget.streamingCoverImageProvider,
           iconImageProvider: widget.streamingIconImageProvider,
           useIconLayout: widget.layoutMode == LayoutMode.handheld || widget.layoutMode == LayoutMode.compact,
+          layoutMode: widget.layoutMode,
           displayNameProvider: widget.streamingDisplayNameProvider,
           gameStreamingApps: widget.gameStreamingApps,
           videoStreamingApps: widget.videoStreamingApps,
@@ -179,7 +181,7 @@ class _LibraryTabsManagerState extends State<LibraryTabsManager> {
             return null;
           }),
         },
-        child: widget.layoutMode == LayoutMode.handheld
+        child: widget.layoutMode == LayoutMode.handheld || widget.layoutMode == LayoutMode.console
             ? Row(
                 children: [
                   _HandheldTabRail(

@@ -233,6 +233,10 @@ class _LayoutPickerState extends State<_LayoutPicker> {
                 value: LayoutMode.compact,
                 child: Text(l10n.settingsLayoutCompact),
               ),
+              DropdownMenuItem(
+                value: LayoutMode.console,
+                child: Text(l10n.settingsLayoutConsole),
+              ),
             ],
             onChanged: (value) {
               if (value != null) {
@@ -418,6 +422,26 @@ class _ColorPalettePickerState extends State<_ColorPalettePicker> {
               DropdownMenuItem(
                 value: ColorPalette.catppuccinMocha,
                 child: Text(l10n.settingsColorPaletteCatppuccinMocha),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.neonNight,
+                child: Text(l10n.settingsColorPaletteNeonNight),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.auroraStream,
+                child: Text(l10n.settingsColorPaletteAuroraStream),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.dark,
+                child: Text(l10n.settingsColorPaletteDark),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.oled,
+                child: Text(l10n.settingsColorPaletteOled),
+              ),
+              DropdownMenuItem(
+                value: ColorPalette.neonEdge,
+                child: Text(l10n.settingsColorPaletteNeonEdge),
               ),
             ],
             onChanged: (value) {

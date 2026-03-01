@@ -252,6 +252,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLayoutCompact => 'Compact Tiles';
 
   @override
+  String get settingsLayoutConsole => 'Console Home';
+
+  @override
   String get settingsUseHomeAsLibrary => 'Use Home as Library';
 
   @override
@@ -280,6 +283,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsColorPaletteCatppuccinMocha => 'Catppuccin Mocha';
+
+  @override
+  String get settingsColorPaletteNeonNight => 'Neon Night (Cyber Glow)';
+
+  @override
+  String get settingsColorPaletteAuroraStream => 'Aurora Stream (Teal Sky)';
+
+  @override
+  String get settingsColorPaletteDark => 'Dark (Graphite)';
+
+  @override
+  String get settingsColorPaletteOled => 'OLED (True Black)';
+
+  @override
+  String get settingsColorPaletteNeonEdge => 'Neon Edge (Futuristic)';
 
   @override
   String get settingsStreaming => 'Streaming';
@@ -327,10 +345,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPlazaNetNotConnected => 'Not connected to PlazaNet';
 
   @override
-  String get libraryNoGames => 'No games in your library yet';
+  String get libraryNoGames => 'No games in your library';
 
   @override
-  String get libraryAddGame => 'Add games from the Store tab';
+  String get libraryAddGame => 'Long-press on apps to add them as games';
 
   @override
   String get librarySearchPlaceholder => 'Search games...';

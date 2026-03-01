@@ -254,6 +254,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsLayoutCompact => 'Kompaktowe kafelki';
 
   @override
+  String get settingsLayoutConsole => 'Menu konsolowe';
+
+  @override
   String get settingsUseHomeAsLibrary => 'Użyj Strona główna jako Biblioteka';
 
   @override
@@ -282,6 +285,21 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settingsColorPaletteCatppuccinMocha => 'Catppuccin Mocha';
+
+  @override
+  String get settingsColorPaletteNeonNight => 'Neon Night (Cyber Glow)';
+
+  @override
+  String get settingsColorPaletteAuroraStream => 'Aurora Stream (Morski błękit)';
+
+  @override
+  String get settingsColorPaletteDark => 'Ciemny (Grafit)';
+
+  @override
+  String get settingsColorPaletteOled => 'OLED (Prawdziwa czerń)';
+
+  @override
+  String get settingsColorPaletteNeonEdge => 'Neonowa Krawędź (Futurystyczny)';
 
   @override
   String get settingsStreaming => 'Streaming';
@@ -332,7 +350,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get libraryNoGames => 'Brak gier w bibliotece';
 
   @override
-  String get libraryAddGame => 'Dodaj gry z zakładki Sklep';
+  String get libraryAddGame => 'Przytrzymaj aplikacje, aby dodać je jako gry';
 
   @override
   String get librarySearchPlaceholder => 'Szukaj gier...';

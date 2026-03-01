@@ -254,6 +254,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsLayoutCompact => 'コンパクトタイル';
 
   @override
+  String get settingsLayoutConsole => 'コンソールホーム';
+
+  @override
   String get settingsUseHomeAsLibrary => 'ホームをライブラリとして使用';
 
   @override
@@ -282,6 +285,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsColorPaletteCatppuccinMocha => 'Catppuccin Mocha';
+
+  @override
+  String get settingsColorPaletteNeonNight => 'Neon Night（サイバーグロー）';
+
+  @override
+  String get settingsColorPaletteAuroraStream => 'Aurora Stream（ティールスカイ）';
+
+  @override
+  String get settingsColorPaletteDark => 'ダーク（グラファイト）';
+
+  @override
+  String get settingsColorPaletteOled => 'OLED（トゥルーブラック）';
+
+  @override
+  String get settingsColorPaletteNeonEdge => 'ネオンエッジ（未来的）';
 
   @override
   String get settingsStreaming => 'ストリーミング';
@@ -332,7 +350,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get libraryNoGames => 'ライブラリにゲームがありません';
 
   @override
-  String get libraryAddGame => 'ストアタブからゲームを追加';
+  String get libraryAddGame => 'アプリを長押しでゲームとして追加';
 
   @override
   String get librarySearchPlaceholder => 'ゲームを検索...';

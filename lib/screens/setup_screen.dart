@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../app.dart';
 import '../theme/app_colors.dart';
 import '../services/game_library_service.dart';
 import '../services/presence_service.dart';
@@ -34,6 +35,9 @@ class _SetupScreenState extends State<SetupScreen> {
   void initState() {
     super.initState();
     _loadLanguagePreference();
+    _nameController.addListener(() {
+      setState(() {});
+    });
   }
 
   Future<void> _loadLanguagePreference() async {
@@ -217,11 +221,6 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
             ),
             textAlign: TextAlign.center,
-            onSubmitted: (_) {
-              if (_hasName) {
-                _goToStep(1);
-              }
-            },
           ),
           const SizedBox(height: 24),
           Text(
@@ -441,13 +440,12 @@ class _SetupScreenState extends State<SetupScreen> {
           ],
           onChanged: (value) async {
             if (value != null) {
-              final navigator = Navigator.of(context);
               setState(() {
                 _selectedLanguage = value;
               });
               await _saveLanguagePreference(value);
               if (mounted) {
-                navigator.pushNamedAndRemoveUntil('/', (route) => false);
+                GamePlaza.of(context)?.updateLocale(Locale(value));
               }
             }
           },

@@ -110,6 +110,7 @@ abstract class AppLocalizations {
   String get settingsLayoutClassic;
   String get settingsLayoutHandheld;
   String get settingsLayoutCompact;
+  String get settingsLayoutConsole;
   String get settingsUseHomeAsLibrary;
   String get settingsUseHomeAsLibraryDesc;
   String get settingsColorPalette;
@@ -120,6 +121,11 @@ abstract class AppLocalizations {
   String get settingsColorPaletteCatppuccinFrappe;
   String get settingsColorPaletteCatppuccinMacchiato;
   String get settingsColorPaletteCatppuccinMocha;
+  String get settingsColorPaletteNeonNight;
+  String get settingsColorPaletteAuroraStream;
+  String get settingsColorPaletteDark;
+  String get settingsColorPaletteOled;
+  String get settingsColorPaletteNeonEdge;
   String get settingsStreaming;
   String get settingsGameStreaming;
   String get settingsGameStreamingDesc;

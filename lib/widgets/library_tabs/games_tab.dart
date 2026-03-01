@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../theme/app_colors.dart';
-import '../../models/models.dart';
+import '../../models/layout_mode.dart';
 import '../../services/game_library_service.dart';
 import '../../l10n/app_localizations.dart';
+import '../../utils/responsive.dart';
 
 class GamesTab extends StatefulWidget {
   final List<Game> games;
@@ -16,6 +17,7 @@ class GamesTab extends StatefulWidget {
   final ImageProvider? Function(Game) coverImageProvider;
   final ImageProvider? Function(Game) iconImageProvider;
   final bool useIconLayout;
+  final LayoutMode layoutMode;
   final ValueChanged<String> onSearchQueryChanged;
 
   const GamesTab({
@@ -28,6 +30,7 @@ class GamesTab extends StatefulWidget {
     required this.coverImageProvider,
     required this.iconImageProvider,
     this.useIconLayout = false,
+    required this.layoutMode,
     required this.onSearchQueryChanged,
   });
 
@@ -83,6 +86,7 @@ class _GamesTabState extends State<GamesTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (widget.games.isEmpty) {
       return Center(
         child: Column(
@@ -95,7 +99,7 @@ class _GamesTabState extends State<GamesTab> {
             ),
             SizedBox(height: 16),
             Text(
-              'No games in your library',
+              l10n.libraryNoGames,
               style: TextStyle(
                 fontSize: 18,
                 color: AppColors.textPrimary,
@@ -103,7 +107,7 @@ class _GamesTabState extends State<GamesTab> {
             ),
             SizedBox(height: 8),
             Text(
-              'Long-press on apps to add them as games',
+              l10n.libraryAddGame,
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
@@ -197,24 +201,36 @@ class _GamesTabState extends State<GamesTab> {
       );
     }
 
+    if (widget.layoutMode == LayoutMode.console) {
+      return _buildConsoleCoverWheel(filteredGames);
+    }
+
     final iconRows = _iconRowsFromScale();
     final iconSpacing = _iconSpacingFromScale();
-    final gridDelegate = widget.useIconLayout
-        ? SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: iconRows,
-            childAspectRatio: 0.95,
-            crossAxisSpacing: iconSpacing,
-            mainAxisSpacing: iconSpacing,
-          )
-        : const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            childAspectRatio: 0.62,
-            crossAxisSpacing: 18,
-            mainAxisSpacing: 20,
-          );
+    final responsive = Responsive.of(context);
+    
+    final SliverGridDelegate gridDelegate;
+    if (widget.useIconLayout) {
+      gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: iconRows,
+        childAspectRatio: 0.95,
+        crossAxisSpacing: iconSpacing,
+        mainAxisSpacing: iconSpacing,
+      );
+    } else {
+      gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: responsive.gridColumns,
+        childAspectRatio: 0.62,
+        crossAxisSpacing: responsive.gridSpacing,
+        mainAxisSpacing: responsive.gridSpacing,
+      );
+    }
 
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+      padding: EdgeInsets.symmetric(
+        horizontal: responsive.horizontalPadding,
+        vertical: 18,
+      ),
       gridDelegate: gridDelegate,
       scrollDirection: widget.useIconLayout ? Axis.horizontal : Axis.vertical,
       physics: widget.useIconLayout
@@ -225,6 +241,30 @@ class _GamesTabState extends State<GamesTab> {
         return FocusTraversalOrder(
           order: NumericFocusOrder(index.toDouble()),
           child: _buildGameCard(filteredGames[index]),
+        );
+      },
+    );
+  }
+
+  Widget _buildConsoleCoverWheel(List<Game> games) {
+    final responsive = Responsive.of(context);
+    return ListView.separated(
+      padding: EdgeInsets.symmetric(
+        horizontal: responsive.horizontalPadding,
+        vertical: 26,
+      ),
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      itemCount: games.length,
+      separatorBuilder: (_, _) => const SizedBox(width: 18),
+      itemBuilder: (context, index) {
+        return SizedBox(
+          width: responsive.consoleCardWidth,
+          height: responsive.consoleCardHeight,
+          child: FocusTraversalOrder(
+            order: NumericFocusOrder(index.toDouble()),
+            child: _buildGameCard(games[index], isLarge: true),
+          ),
         );
       },
     );
@@ -273,8 +313,7 @@ class _GamesTabState extends State<GamesTab> {
                 child: AnimatedContainer(
                 duration: const Duration(milliseconds: 110),
                 curve: Curves.easeOut,
-                width: isLarge ? 200 : null,
-                margin: isLarge ? const EdgeInsets.only(right: 16) : null,
+                width: isLarge ? double.infinity : null,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(widget.useIconLayout ? 24 : 22),
                   color: widget.useIconLayout
@@ -325,7 +364,7 @@ class _GamesTabState extends State<GamesTab> {
                           ? _buildIconTileContent(imageProvider, focused)
                           : _buildCoverTileContent(imageProvider, focused),
                     ),
-                    if (!widget.useIconLayout)
+                    if (!widget.useIconLayout && !isLarge)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
                         child: Text(
